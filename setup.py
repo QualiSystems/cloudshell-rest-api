@@ -14,7 +14,7 @@ history = get_file_content('HISTORY.rst')
 
 setup(
     name='cloudshell-rest-api',
-    version='0.1.0',
+    version=get_file_content('version.txt'),
     description="Python client for the CloudShell REST API",
     long_description=readme + '\n\n' + history,
     author="Boris Modylevsky",

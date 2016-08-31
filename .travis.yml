@@ -1,13 +1,21 @@
 language: python
 python: 2.7
-
 install:
 - pip install -r requirements.txt
 - pip install -r test_requirements.txt
 - pip install coveralls
-
 script: coverage run --source=cloudshell_rest_api setup.py test
-
 after_success: coveralls
-
-
+deploy:
+  matrix:
+  - provider: pypi
+    server: https://pypi.python.org/pypi
+    distributions: sdist
+    user: Quali
+    password:
+      secure: $secure
+    on:
+      branch: master
+      tags: false
+  password:
+    secure: RlWu9sHbkx09hBs5aaD7gt1EjXQGLOKLracV6RHYw3YnJsViikCnauSnapZpPn2IL5Xfpa2pLNqcitzdtXME2JBEOrQwoaX7llusjPUPMtMikUCfhC/o3oFUofetkxj7Z5F5GA8QDh6pDujdVJOdGmLu+fhjZgrOsIfrG0nIebYgPK8zzzum1JLXG+f30csxx8cN+JpiNcWJb7cRdbed0QVIGqFHUUkEEbAyYNjj2pJYgwrD4J064+xfyPelhK6gPuyKBb3Afoo+ZE/8z+18QhjSVz+DgGgcPp+227tO/JImHRt2mL28+pUqvmcFzzY3m7k1r+OMEQsEo45is0KXNiWmy5rjdqIeIMXyvG6wWBvQ2ZegHDP0Dwk5/0V3DtqrdLZ1ny/sg8S8n/xYZKE++771NnSWM4VlRKl0gKQi3PM4LNhLnXAl3n3aCkHC5cMeVe93b3YynO9s0+rtxoKjM46aCU/czSwiWlfFiak3Pfc5jSh8gsPaGIuug3DkNm1rO9RvMXsTM26SafynYxRaEEsiXj3r9gnn/AODElo2yNXGjFUOLLIcZxfzFyAH0mWhICbGwngqGq8jxDjfhuK1GMwq3oAZJRU0ohiiozzmTu3H6FWPJd5wI6lFN64m6uZ/yG3/BMO4DdWScwDkmtEvRh4sUozCLwVDCn5eYZBn69o=
