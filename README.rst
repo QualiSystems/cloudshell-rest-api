@@ -2,39 +2,24 @@
 cloudshell-rest-api
 ===============================
 
+.. image:: https://travis-ci.org/QualiSystems/cloudshell-rest-api.svg?branch=master
+    :target: https://travis-ci.org/QualiSystems/cloudshell-rest-api
 
-.. image:: https://img.shields.io/pypi/v/cloudshell_rest_api.svg
-        :target: https://pypi.python.org/pypi/cloudshell_rest_api
-
-.. image:: https://img.shields.io/travis/borismod/cloudshell_rest_api.svg
-        :target: https://travis-ci.org/borismod/cloudshell_rest_api
-
-.. image:: https://readthedocs.org/projects/cloudshell-rest-api/badge/?version=latest
-        :target: https://cloudshell-rest-api.readthedocs.io/en/latest/?badge=latest
-        :alt: Documentation Status
-
-.. image:: https://pyup.io/repos/github/borismod/cloudshell_rest_api/shield.svg
-     :target: https://pyup.io/repos/github/borismod/cloudshell_rest_api/
-     :alt: Updates
+.. image:: https://coveralls.io/repos/github/QualiSystems/cloudshell-rest-api/badge.svg?branch=master
+    :target: https://coveralls.io/github/QualiSystems/cloudshell-rest-api?branch=master
 
 
 Python client for the CloudShell REST API
 
 
-* Free software: Apache Software License 2.0
-* Documentation: https://cloudshell-rest-api.readthedocs.io.
-
-
 Features
 --------
 
-* TODO
+* Add Shell - adds a new Shell Entity (supported from CloudShell 7.2)
+* Update Shell - adds a new Shell Entity (supported from CloudShell 7.2)
 
-Credits
----------
 
-This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
+License
+-------
 
-.. _Cookiecutter: https://github.com/audreyr/cookiecutter
-.. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
-
+* Free software: Apache Software License 2.0
