@@ -12,8 +12,7 @@ deploy:
     server: https://pypi.python.org/pypi
     distributions: sdist
     user: Quali
-    password:
-      secure: $pypi_password
+    password: $pypi_password
     on:
       branch: master
       tags: false
