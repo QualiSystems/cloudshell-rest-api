@@ -23,29 +23,28 @@ Features
 Installation
 ------------
 
-``
-pip install cloudshell-rest-api
-``
+Install cloudshell-rest-api Python package from PyPI::
+
+    pip install cloudshell-rest-api
+
 
 Getting started
 ---------------
 
-Make sure to include this line in the beginning of your file:
+Make sure to include this line in the beginning of your file::
 
-``
-from cloudshell_rest_api.cloudshell.rest.api import CloudShellRestApiClient
-``
+    from cloudshell_rest_api.cloudshell.rest.api import CloudShellRestApiClient
 
-Login to CloudShell
 
-``
-client = CloudShellRestApiClient('SERVER', 9000, 'USER', 'PASS', 'Global')
-```
+Login to CloudShell::
 
-Add a new Shell to CloudShell
-``
-client.add_shell('work//NutShell.zip')
-```
+    client = CloudShellRestApiClient('SERVER', 9000, 'USER', 'PASS', 'Global')
+
+
+Add a new Shell to CloudShell::
+
+    client.add_shell('work//NutShell.zip')
+
 
 
 License
