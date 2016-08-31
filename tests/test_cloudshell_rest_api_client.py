@@ -2,14 +2,14 @@ from mock import patch, Mock
 from pyfakefs import fake_filesystem_unittest
 from requests import Response
 
-from cloudshell.rest.api import CloudShellRestApiClient
+from cloudshell_rest_api.cloudshell.rest.api import CloudShellRestApiClient
 
 
 class TestCloudShellRestApiClient(fake_filesystem_unittest.TestCase):
     def setUp(self):
         self.setUpPyfakefs()
 
-    @patch('cloudshell.rest.api.urllib2.build_opener')
+    @patch('cloudshell_rest_api.cloudshell.rest.api.urllib2.build_opener')
     def test_login(self, mock_build_opener):
         # Arrange
         mock_url = Mock()
@@ -24,8 +24,8 @@ class TestCloudShellRestApiClient(fake_filesystem_unittest.TestCase):
         # Assert
         self.assertTrue(mock_opener.open.called, 'open should be called')
 
-    @patch('cloudshell.rest.api.urllib2.build_opener')
-    @patch('cloudshell.rest.api.post')
+    @patch('cloudshell_rest_api.cloudshell.rest.api.urllib2.build_opener')
+    @patch('cloudshell_rest_api.cloudshell.rest.api.post')
     def test_add_shell(self, mock_post, mock_build_opener):
         # Arrange
         mock_url = Mock()
@@ -46,8 +46,8 @@ class TestCloudShellRestApiClient(fake_filesystem_unittest.TestCase):
         self.assertEqual(mock_post.call_args[0][0], 'http://SERVER:9000/API/Shells')
         self.assertEqual(mock_post.call_args[1]['headers']['Authorization'], 'Basic TOKEN')
 
-    @patch('cloudshell.rest.api.urllib2.build_opener')
-    @patch('cloudshell.rest.api.post')
+    @patch('cloudshell_rest_api.cloudshell.rest.api.urllib2.build_opener')
+    @patch('cloudshell_rest_api.cloudshell.rest.api.post')
     def test_update_shell(self, mock_post, mock_build_opener):
         # Arrange
         mock_url = Mock()
