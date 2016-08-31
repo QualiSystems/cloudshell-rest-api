@@ -9,7 +9,7 @@ cloudshell-rest-api
     :target: https://coveralls.io/github/QualiSystems/cloudshell-rest-api?branch=master
 
 .. image:: https://img.shields.io/pypi/v/cloudshell-rest-api.svg?maxAge=2592000
-    :target:
+    :target: https://img.shields.io/pypi/v/cloudshell-rest-api.svg?maxAge=2592000
 
 Python client for the CloudShell REST API
 
