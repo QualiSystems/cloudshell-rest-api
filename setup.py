@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from setuptools import setup
+from setuptools import setup, find_packages
 
 
 def get_file_content(file_name):
@@ -12,19 +13,17 @@ readme = get_file_content('README.rst')
 
 history = get_file_content('HISTORY.rst')
 
+exec(open('cloudshell/version.py').read())
+
 setup(
     name='cloudshell-rest-api',
-    version=get_file_content('version.txt'),
+    version=__version__,
     description="Python client for the CloudShell REST API",
     long_description=readme + '\n\n' + history,
     author="Boris Modylevsky",
     author_email='borismod@gmail.com',
     url='https://github.com/borismod/cloudshell_rest_api',
-    packages=[
-        'cloudshell_rest_api',
-    ],
-    package_dir={'cloudshell_rest_api':
-                     'cloudshell_rest_api'},
+    packages=find_packages(),
     include_package_data=True,
     install_requires=get_file_content('requirements.txt'),
     license="Apache Software License 2.0",
