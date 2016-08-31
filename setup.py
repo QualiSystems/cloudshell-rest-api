@@ -3,19 +3,17 @@
 
 from setuptools import setup
 
+
+def get_file_content(file_name):
+    with open(file_name) as f:
+        return f.read()
+
+
 with open('README.rst') as readme_file:
     readme = readme_file.read()
 
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
-
-requirements = [
-    # TODO: put package requirements here
-]
-
-test_requirements = [
-    # TODO: put package test requirements here
-]
 
 setup(
     name='cloudshell_rest_api',
@@ -29,9 +27,9 @@ setup(
         'cloudshell_rest_api',
     ],
     package_dir={'cloudshell_rest_api':
-                 'cloudshell_rest_api'},
+                     'cloudshell_rest_api'},
     include_package_data=True,
-    install_requires=requirements,
+    install_requires=get_file_content('requirements.txt'),
     license="Apache Software License 2.0",
     zip_safe=False,
     keywords='cloudshell_rest_api',
@@ -49,5 +47,5 @@ setup(
         'Programming Language :: Python :: 3.5',
     ],
     test_suite='tests',
-    tests_require=test_requirements
+    tests_require=get_file_content('test_requirements.txt')
 )
