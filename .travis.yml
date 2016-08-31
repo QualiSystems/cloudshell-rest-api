@@ -9,11 +9,11 @@ after_success: coveralls
 deploy:
     skip_cleanup: true
     provider: pypi
-    server: https://pypi.python.org/pypi
+    server: https://pypi.python.org/simple
     distributions: sdist
     user: Quali
     password:
-      secure: $secure
+      secure: $pypi_password
     on:
       branch: master
       tags: false
