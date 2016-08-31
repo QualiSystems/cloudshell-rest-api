@@ -23,7 +23,7 @@ Features
 Installation
 ------------
 
-``bash
+``
 pip install cloudshell-rest-api
 ``
 
@@ -32,18 +32,18 @@ Getting started
 
 Make sure to include this line in the beginning of your file:
 
-``Python
+``
 from cloudshell_rest_api.cloudshell.rest.api import CloudShellRestApiClient
 ``
 
 Login to CloudShell
 
-``Python
+``
 client = CloudShellRestApiClient('SERVER', 9000, 'USER', 'PASS', 'Global')
 ```
 
 Add a new Shell to CloudShell
-``Python
+``
 client.add_shell('work//NutShell.zip')
 ```
 
