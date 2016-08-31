@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="c12dbf38-b06d-48d8-bd49-f6d622bd844c" name="Default" comment="">
-      <change type="MOVED" beforePath="$PROJECT_DIR$/tests/test_api.py" afterPath="$PROJECT_DIR$/tests/test_cloudshell_rest_api_client.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/test_requirements.txt" afterPath="$PROJECT_DIR$/test_requirements.txt" />
     </list>
     <ignored path="cloudshell-rest-api.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -30,14 +30,24 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="test_cloudshell_rest_api_client.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="test_cloudshell_rest_api_client.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/tests/test_cloudshell_rest_api_client.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="119">
-              <caret line="7" column="33" selection-start-line="7" selection-start-column="6" selection-end-line="7" selection-end-column="33" />
+              <caret line="7" column="65" selection-start-line="7" selection-start-column="65" selection-end-line="7" selection-end-column="65" />
               <folding>
                 <element signature="e#0#28#0" expanded="true" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="fake_filesystem_unittest.py" pinned="false" current-in-tab="false">
+        <entry file="file://C:/Python27/Lib/site-packages/pyfakefs/fake_filesystem_unittest.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="492">
+              <caret line="45" column="19" selection-start-line="45" selection-start-column="11" selection-end-line="45" selection-end-column="19" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -62,11 +72,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="test_requirements.txt" pinned="false" current-in-tab="false">
+      <file leaf-file-name="test_requirements.txt" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/test_requirements.txt">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="8" selection-start-line="0" selection-start-column="8" selection-end-line="0" selection-end-column="8" />
+            <state relative-caret-position="34">
+              <caret line="2" column="8" selection-start-line="2" selection-start-column="8" selection-end-line="2" selection-end-column="8" />
               <folding />
             </state>
           </provider>
@@ -127,16 +137,6 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="__init__.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/cloudshell_rest_api/cloudshell/rest/__init__.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="17">
-              <caret line="1" column="0" selection-start-line="1" selection-start-column="0" selection-end-line="1" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
     </leaf>
   </component>
   <component name="FileTemplateManagerImpl">
@@ -153,11 +153,11 @@
     <option name="CHANGED_PATHS">
       <list>
         <option value="$PROJECT_DIR$/cloudshell_rest_api/__init__.py" />
-        <option value="$PROJECT_DIR$/test_requirements.txt" />
         <option value="$PROJECT_DIR$/tests/test_api.py" />
         <option value="$PROJECT_DIR$/cloudshell_rest_api/cloudshell/rest/api.py" />
         <option value="$PROJECT_DIR$/.travis.yml" />
         <option value="$PROJECT_DIR$/setup.py" />
+        <option value="$PROJECT_DIR$/test_requirements.txt" />
       </list>
     </option>
   </component>
@@ -680,9 +680,9 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
-    <editor active="false" />
+    <editor active="true" />
     <layout>
-      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="-1" side_tool="true" content_ui="tabs" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
@@ -819,21 +819,29 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/test_requirements.txt">
+    <entry file="file://$PROJECT_DIR$/tests/test_cloudshell_rest_api_client.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="8" selection-start-line="0" selection-start-column="8" selection-end-line="0" selection-end-column="8" />
+        <state relative-caret-position="119">
+          <caret line="7" column="65" selection-start-line="7" selection-start-column="65" selection-end-line="7" selection-end-column="65" />
+          <folding>
+            <element signature="e#0#28#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://C:/Python27/Lib/site-packages/pyfakefs/fake_filesystem_unittest.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="492">
+          <caret line="45" column="19" selection-start-line="45" selection-start-column="11" selection-end-line="45" selection-end-column="19" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_cloudshell_rest_api_client.py">
+    <entry file="file://$PROJECT_DIR$/test_requirements.txt">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="119">
-          <caret line="7" column="33" selection-start-line="7" selection-start-column="6" selection-end-line="7" selection-end-column="33" />
-          <folding>
-            <element signature="e#0#28#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="34">
+          <caret line="2" column="8" selection-start-line="2" selection-start-column="8" selection-end-line="2" selection-end-column="8" />
+          <folding />
         </state>
       </provider>
     </entry>
