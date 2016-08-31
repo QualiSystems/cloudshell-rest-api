@@ -8,15 +8,12 @@ def get_file_content(file_name):
     with open(file_name) as f:
         return f.read()
 
+readme = get_file_content('README.rst')
 
-with open('README.rst') as readme_file:
-    readme = readme_file.read()
-
-with open('HISTORY.rst') as history_file:
-    history = history_file.read()
+history = get_file_content('HISTORY.rst')
 
 setup(
-    name='cloudshell_rest_api',
+    name='cloudshell-rest-api',
     version='0.1.0',
     description="Python client for the CloudShell REST API",
     long_description=readme + '\n\n' + history,
@@ -32,7 +29,7 @@ setup(
     install_requires=get_file_content('requirements.txt'),
     license="Apache Software License 2.0",
     zip_safe=False,
-    keywords='cloudshell_rest_api',
+    keywords='cloudshell quali sandbox cloud rest api',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
