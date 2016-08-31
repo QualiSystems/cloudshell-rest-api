@@ -18,7 +18,7 @@ Features
 --------
 
 * Add Shell - adds a new Shell Entity (supported from CloudShell 7.2)
-* Update Shell - adds a new Shell Entity (supported from CloudShell 7.2)
+* Update Shell - updates an existing Shell Entity (supported from CloudShell 7.2)
 
 Installation
 ------------

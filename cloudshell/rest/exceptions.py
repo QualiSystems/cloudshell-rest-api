@@ -1,0 +1,2 @@
+class ShellNotFoundException(Exception):
+    pass
