@@ -33,7 +33,7 @@ Getting started
 
 Make sure to include this line in the beginning of your file::
 
-    from cloudshell_rest_api.cloudshell.rest.api import CloudShellRestApiClient
+    from cloudshell.rest.api import CloudShellRestApiClient
 
 
 Login to CloudShell::
