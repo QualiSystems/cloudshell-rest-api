@@ -7,7 +7,6 @@ install:
 script: coverage run --source=cloudshell_rest_api setup.py test
 after_success: coveralls
 deploy:
-  matrix:
   - provider: pypi
     server: https://pypi.python.org/pypi
     distributions: sdist
