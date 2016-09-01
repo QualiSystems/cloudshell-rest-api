@@ -6,7 +6,7 @@ from requests import post
 from cloudshell.rest.exceptions import ShellNotFoundException
 
 
-class CloudShellRestApiClient(object):
+class PackagingRestApiClient(object):
     def __init__(self, ip, port, username, password, domain):
         """
         Logs into CloudShell using REST API
@@ -21,7 +21,7 @@ class CloudShellRestApiClient(object):
         opener = urllib2.build_opener(urllib2.HTTPHandler)
         url = 'http://{0}:{1}/API/Auth/Login'.format(ip, port)
         data = 'username={0}&password={1}&domain={2}' \
-            .format(username, CloudShellRestApiClient._urlencode(password), domain)
+            .format(username, PackagingRestApiClient._urlencode(password), domain)
         request = urllib2.Request(url=url, data=data)
         request.add_header('Content-Type', 'application/x-www-form-urlencoded')
         backup = request.get_method

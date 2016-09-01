@@ -2,11 +2,11 @@ from mock import patch, Mock
 from pyfakefs import fake_filesystem_unittest
 from requests import Response
 
-from cloudshell.rest.api import CloudShellRestApiClient
+from cloudshell.rest.api import PackagingRestApiClient
 from cloudshell.rest.exceptions import ShellNotFoundException
 
 
-class TestCloudShellRestApiClient(fake_filesystem_unittest.TestCase):
+class TestPackagingRestApiClient(fake_filesystem_unittest.TestCase):
     def setUp(self):
         self.setUpPyfakefs()
 
@@ -20,7 +20,7 @@ class TestCloudShellRestApiClient(fake_filesystem_unittest.TestCase):
         mock_build_opener.return_value = mock_opener
 
         # Act
-        CloudShellRestApiClient('SERVER', 9000, 'USER', 'PASS', 'Global')
+        PackagingRestApiClient('SERVER', 9000, 'USER', 'PASS', 'Global')
 
         # Assert
         self.assertTrue(mock_opener.open.called, 'open should be called')
@@ -34,7 +34,7 @@ class TestCloudShellRestApiClient(fake_filesystem_unittest.TestCase):
         mock_opener = Mock()
         mock_opener.open = Mock(return_value=mock_url)
         mock_build_opener.return_value = mock_opener
-        client = CloudShellRestApiClient('SERVER', 9000, 'USER', 'PASS', 'Global')
+        client = PackagingRestApiClient('SERVER', 9000, 'USER', 'PASS', 'Global')
         self.fs.CreateFile('work//NutShell.zip', contents='ZIP CONTENT')
         mock_post.return_value = Response()
         mock_post.return_value.status_code = 201  # Created
@@ -56,7 +56,7 @@ class TestCloudShellRestApiClient(fake_filesystem_unittest.TestCase):
         mock_opener = Mock()
         mock_opener.open = Mock(return_value=mock_url)
         mock_build_opener.return_value = mock_opener
-        client = CloudShellRestApiClient('SERVER', 9000, 'USER', 'PASS', 'Global')
+        client = PackagingRestApiClient('SERVER', 9000, 'USER', 'PASS', 'Global')
         self.fs.CreateFile('work//NutShell.zip', contents='ZIP CONTENT')
         mock_post.return_value = Response()
         mock_post.return_value.status_code = 200  # Ok
@@ -78,7 +78,7 @@ class TestCloudShellRestApiClient(fake_filesystem_unittest.TestCase):
         mock_opener = Mock()
         mock_opener.open = Mock(return_value=mock_url)
         mock_build_opener.return_value = mock_opener
-        client = CloudShellRestApiClient('SERVER', 9000, 'USER', 'PASS', 'Global')
+        client = PackagingRestApiClient('SERVER', 9000, 'USER', 'PASS', 'Global')
         self.fs.CreateFile('work//NutShell.zip', contents='ZIP CONTENT')
         mock_post.return_value = Response()
         mock_post.return_value.status_code = 404  # Not Found
