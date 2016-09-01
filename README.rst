@@ -38,7 +38,7 @@ Make sure to include this line in the beginning of your file::
 
 Login to CloudShell::
 
-    client = CloudShellRestApiClient('SERVER', 9000, 'USER', 'PASS', 'Global')
+    client = PackagingRestApiClient('SERVER', 9000, 'USER', 'PASS', 'Global')
 
 
 Add a new Shell to CloudShell::
