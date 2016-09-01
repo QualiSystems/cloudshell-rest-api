@@ -2,7 +2,8 @@
 History
 =======
 
-0.1.0 (2016-08-31)
-------------------
+7.2.0.6 (2016-09-01)
+--------------------
 
-* First release on PyPI.
+* First release of with Add Shell and Update Shell features
+
