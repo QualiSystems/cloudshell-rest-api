@@ -1,7 +1,7 @@
 import os
 import re
 import urllib2
-from requests import post
+from requests import post, put
 
 from cloudshell.rest.exceptions import ShellNotFoundException
 
@@ -56,7 +56,7 @@ class PackagingRestApiClient(object):
         filename = os.path.basename(shell_path)
         shell_name = os.path.splitext(filename)[0]
         url = 'http://{0}:{1}/API/Shells/{2}'.format(self.ip, self.port, shell_name)
-        response = post(url,
+        response = put(url,
                         files={filename: open(shell_path, 'rb')},
                         headers={'Authorization': 'Basic ' + self.token})
 
