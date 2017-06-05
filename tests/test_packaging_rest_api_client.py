@@ -3,7 +3,7 @@ from pyfakefs import fake_filesystem_unittest
 from requests import Response
 
 from cloudshell.rest.api import PackagingRestApiClient
-from cloudshell.rest.exceptions import ShellNotFoundException
+from cloudshell.rest.exceptions import ShellNotFoundException, FeatureUnavailable
 
 
 class TestPackagingRestApiClient(fake_filesystem_unittest.TestCase):
@@ -86,4 +86,39 @@ class TestPackagingRestApiClient(fake_filesystem_unittest.TestCase):
         # Act & Assert
         self.assertRaises(ShellNotFoundException, client.update_shell, 'work//NutShell.zip')
 
+    @patch('cloudshell.rest.api.urllib2.build_opener')
+    @patch('cloudshell.rest.api.get')
+    def test_get_installed_standards(self, mock_get, mock_build_opener):
+        # Arrange
+        mock_url = Mock()
+        mock_url.read = Mock(return_value='TOKEN')
+        mock_opener = Mock()
+        mock_opener.open = Mock(return_value=mock_url)
+        mock_build_opener.return_value = mock_opener
+        client = PackagingRestApiClient('SERVER', 9000, 'USER', 'PASS', 'Global')
+        mock_get.return_value = Response()
+        mock_get.return_value.status_code = 200  # Ok
 
+        # Act
+        client.get_installed_standards()
+
+        # Assert
+        self.assertTrue(mock_get.called, 'Post should be called')
+        self.assertEqual(mock_get.call_args[0][0], 'http://SERVER:9000/API/Standards')
+        self.assertEqual(mock_get.call_args[1]['headers']['Authorization'], 'Basic TOKEN')
+
+    @patch('cloudshell.rest.api.urllib2.build_opener')
+    @patch('cloudshell.rest.api.get')
+    def test_get_installed_standards_feature_not_install_error_thrown(self, mock_get, mock_build_opener):
+        # Arrange
+        mock_url = Mock()
+        mock_url.read = Mock(return_value='TOKEN')
+        mock_opener = Mock()
+        mock_opener.open = Mock(return_value=mock_url)
+        mock_build_opener.return_value = mock_opener
+        client = PackagingRestApiClient('SERVER', 9000, 'USER', 'PASS', 'Global')
+        mock_get.return_value = Response()
+        mock_get.return_value.status_code = 404  # Not Found
+
+        # Act Assert
+        self.assertRaises(FeatureUnavailable, client.get_installed_standards)

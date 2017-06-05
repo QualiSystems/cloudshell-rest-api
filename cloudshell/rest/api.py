@@ -1,9 +1,9 @@
 import os
 import re
 import urllib2
-from requests import post, put
+from requests import post, put, get
 
-from cloudshell.rest.exceptions import ShellNotFoundException
+from cloudshell.rest.exceptions import ShellNotFoundException, FeatureUnavailable
 
 
 class PackagingRestApiClient(object):
@@ -57,11 +57,26 @@ class PackagingRestApiClient(object):
         shell_name = os.path.splitext(filename)[0]
         url = 'http://{0}:{1}/API/Shells/{2}'.format(self.ip, self.port, shell_name)
         response = put(url,
-                        files={filename: open(shell_path, 'rb')},
-                        headers={'Authorization': 'Basic ' + self.token})
+                       files={filename: open(shell_path, 'rb')},
+                       headers={'Authorization': 'Basic ' + self.token})
 
         if response.status_code == 404:  # Not Found
             raise ShellNotFoundException()
+
+        if response.status_code != 200:  # Ok
+            raise Exception(response.text)
+
+    def get_installed_standards(self):
+        """
+        Gets all standards installed on CloudShell
+        :return:
+        """
+        url = 'http://{0}:{1}/API/Standards'.format(self.ip, self.port)
+        response = get(url,
+                       headers={'Authorization': 'Basic ' + self.token})
+
+        if response.status_code == 404:  # Feature unavailable (probably due to cloudshell version smaller than 8.1)
+            raise FeatureUnavailable()
 
         if response.status_code != 200:  # Ok
             raise Exception(response.text)
