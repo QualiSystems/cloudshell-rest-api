@@ -81,6 +81,8 @@ class PackagingRestApiClient(object):
         if response.status_code != 200:  # Ok
             raise Exception(response.text)
 
+        return response.json()
+
     @staticmethod
     def _urlencode(s):
         return s.replace('+', '%2B').replace('/', '%2F').replace('=', '%3D')
