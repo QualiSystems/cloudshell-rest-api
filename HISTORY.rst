@@ -2,6 +2,11 @@
 History
 =======
 
+8.1.1.0 (2017-08-27)
+--------------------
+
+* remodeling update_shell to also accept shell name
+
 8.1.0.1 (2017-06-12)
 --------------------
 

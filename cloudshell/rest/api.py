@@ -47,14 +47,15 @@ class PackagingRestApiClient(object):
         if response.status_code != 201:
             raise Exception(response.text)
 
-    def update_shell(self, shell_path):
+    def update_shell(self, shell_path, shell_name=None):
         """
         Updates an existing Shell Entity in CloudShell
-        :param shell_path:
+        :param shell_path: The path to the shell file
+        :param shell_name: The shell name. if not supplied the shell name is derived from the shell path
         :return:
         """
         filename = os.path.basename(shell_path)
-        shell_name = os.path.splitext(filename)[0]
+        shell_name = shell_name or self._get_shell_name_from_filename(filename)
         url = 'http://{0}:{1}/API/Shells/{2}'.format(self.ip, self.port, shell_name)
         response = put(url,
                        files={filename: open(shell_path, 'rb')},
@@ -86,3 +87,7 @@ class PackagingRestApiClient(object):
     @staticmethod
     def _urlencode(s):
         return s.replace('+', '%2B').replace('/', '%2F').replace('=', '%3D')
+
+    @staticmethod
+    def _get_shell_name_from_filename(filename):
+        return os.path.splitext(filename)[0]

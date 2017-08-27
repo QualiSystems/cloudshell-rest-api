@@ -71,6 +71,28 @@ class TestPackagingRestApiClient(fake_filesystem_unittest.TestCase):
 
     @patch('cloudshell.rest.api.urllib2.build_opener')
     @patch('cloudshell.rest.api.put')
+    def test_update_shell_name_given(self, mock_put, mock_build_opener):
+        # Arrange
+        mock_url = Mock()
+        mock_url.read = Mock(return_value='TOKEN')
+        mock_opener = Mock()
+        mock_opener.open = Mock(return_value=mock_url)
+        mock_build_opener.return_value = mock_opener
+        client = PackagingRestApiClient('SERVER', 9000, 'USER', 'PASS', 'Global')
+        self.fs.CreateFile('work//NutShell.zip', contents='ZIP CONTENT')
+        mock_put.return_value = Response()
+        mock_put.return_value.status_code = 200  # Ok
+
+        # Act
+        client.update_shell('work//NutShell.zip', 'my_amazing_shell')
+
+        # Assert
+        self.assertTrue(mock_put.called, 'Put should be called')
+        self.assertEqual(mock_put.call_args[0][0], 'http://SERVER:9000/API/Shells/my_amazing_shell')
+        self.assertEqual(mock_put.call_args[1]['headers']['Authorization'], 'Basic TOKEN')    \
+
+    @patch('cloudshell.rest.api.urllib2.build_opener')
+    @patch('cloudshell.rest.api.put')
     def test_update_shell_throws_shell_not_found_exception_when_404_code_returned(self, mock_put, mock_build_opener):
         # Arrange
         mock_url = Mock()
@@ -97,13 +119,14 @@ class TestPackagingRestApiClient(fake_filesystem_unittest.TestCase):
         mock_build_opener.return_value = mock_opener
         client = PackagingRestApiClient('SERVER', 9000, 'USER', 'PASS', 'Global')
         mock_get.return_value = Response()
+        mock_get.return_value._content = "[]"  # hack - empty response content
         mock_get.return_value.status_code = 200  # Ok
 
         # Act
         client.get_installed_standards()
 
         # Assert
-        self.assertTrue(mock_get.called, 'Post should be called')
+        self.assertTrue(mock_get.called, 'Get should be called')
         self.assertEqual(mock_get.call_args[0][0], 'http://SERVER:9000/API/Standards')
         self.assertEqual(mock_get.call_args[1]['headers']['Authorization'], 'Basic TOKEN')
 
