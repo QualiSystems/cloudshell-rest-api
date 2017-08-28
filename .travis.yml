@@ -9,12 +9,10 @@ after_success: coveralls
 deploy:
     skip_cleanup: true
     provider: pypi
-    server: https://pypi.python.org/pypi
     distributions: sdist
     user: Quali
-    password: $pypi_password
+    password:
+      secure: KdA7g0OP68S63pZtF8YOZSW4LtqxOv4vmk0+AAXkZ/BJbW//fl6CuAbMgjk5cio6R+HrGrffFltSxWkOj2fSQnUOUpKAHFpmbdRCbhfpaG45AGW8v2eZ52EXZH01R6LQS+CvxHNUmUOiu1P85eO/KBS7FZkwbNmwo0Xaoo/n/EDZlhRPwYC2EilT29cNsEKB+joUeFFXiOmmOwGQYzo/qEab0CPnNsYhHP/PPWUx4Dj3DudfgMtGGJJVKfUshzkhuhJ7ENLlqaSN9Suz+eKYrI2JJ6eAptgH+pE22bSgLAM8RW8s11o7QWBs7yS0U1LhFegJWo0g9RUdB/4noFwocXkI23E9ekzrXS1v8ngja6+maXAJz8F18kIF0YODpYfX2NZ8Bb+2EFJ2nOi2BmqPW1c5j3gbtzaAO0NJ0vCcIX0w1PuS1RFxOx61YPq/U14PwmcUocb2XKh0Gx7aJd2t5Z4Px+ZGv0+tiEFliVt/GCg3PtDUJHPLMGFyGESTil2nGR3lhxFiAkMFCqnJSL0xTulWQ2qJfUPzJBZFY77xvIVwX5DOMfUYUMQoltgCAqGun6EPN5OB7h/3U4nrQ2FcER8Tbr/hPWR1BqDRf3pw/nGZm74OgdK6gO/jEgU+oZbFfTNwL55t/UkopAvzL/XjWHTCMjpwUFV9lCihU4ks9+c=
     on:
       branch: master
       tags: false
-    password:
-      secure: RlWu9sHbkx09hBs5aaD7gt1EjXQGLOKLracV6RHYw3YnJsViikCnauSnapZpPn2IL5Xfpa2pLNqcitzdtXME2JBEOrQwoaX7llusjPUPMtMikUCfhC/o3oFUofetkxj7Z5F5GA8QDh6pDujdVJOdGmLu+fhjZgrOsIfrG0nIebYgPK8zzzum1JLXG+f30csxx8cN+JpiNcWJb7cRdbed0QVIGqFHUUkEEbAyYNjj2pJYgwrD4J064+xfyPelhK6gPuyKBb3Afoo+ZE/8z+18QhjSVz+DgGgcPp+227tO/JImHRt2mL28+pUqvmcFzzY3m7k1r+OMEQsEo45is0KXNiWmy5rjdqIeIMXyvG6wWBvQ2ZegHDP0Dwk5/0V3DtqrdLZ1ny/sg8S8n/xYZKE++771NnSWM4VlRKl0gKQi3PM4LNhLnXAl3n3aCkHC5cMeVe93b3YynO9s0+rtxoKjM46aCU/czSwiWlfFiak3Pfc5jSh8gsPaGIuug3DkNm1rO9RvMXsTM26SafynYxRaEEsiXj3r9gnn/AODElo2yNXGjFUOLLIcZxfzFyAH0mWhICbGwngqGq8jxDjfhuK1GMwq3oAZJRU0ohiiozzmTu3H6FWPJd5wI6lFN64m6uZ/yG3/BMO4DdWScwDkmtEvRh4sUozCLwVDCn5eYZBn69o=
