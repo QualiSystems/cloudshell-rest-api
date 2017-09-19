@@ -2,6 +2,11 @@
 History
 =======
 
+8.2.0.0 (2017-09-19)
+--------------------
+
+* newest addition to rest-api. please welcome get_shell - returns a requested shell information
+
 8.1.1.0 (2017-08-27)
 --------------------
 

@@ -76,13 +76,30 @@ class PackagingRestApiClient(object):
         response = get(url,
                        headers={'Authorization': 'Basic ' + self.token})
 
-        if response.status_code == 404:  # Feature unavailable (probably due to cloudshell version smaller than 8.1)
+        if response.status_code == 404:  # Feature unavailable (probably due to cloudshell version below 8.1)
             raise FeatureUnavailable()
 
         if response.status_code != 200:  # Ok
             raise Exception(response.text)
 
         return response.json()
+
+    def get_shell(self, shell_name):
+        url = 'http://{0}:{1}/API/Shells/{2}'.format(self.ip, self.port, shell_name)
+        response = get(url,
+                       headers={'Authorization': 'Basic ' + self.token})
+
+        if response.status_code == 404:  # Feature unavailable (probably due to cloudshell version below 8.2)
+            raise FeatureUnavailable()
+
+        if response.status_code == 400:  # means shell not found
+            raise ShellNotFoundException()
+
+        if response.status_code != 200:
+            raise Exception(response.text)
+
+        return response.json()
+
 
     @staticmethod
     def _urlencode(s):

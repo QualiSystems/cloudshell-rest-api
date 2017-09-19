@@ -145,3 +145,77 @@ class TestPackagingRestApiClient(fake_filesystem_unittest.TestCase):
 
         # Act Assert
         self.assertRaises(FeatureUnavailable, client.get_installed_standards)
+
+    @patch('cloudshell.rest.api.urllib2.build_opener')
+    @patch('cloudshell.rest.api.get')
+    def test_get_shell_success(self, mock_get, mock_build_opener):
+        # Arrange
+        mock_url = Mock()
+        mock_url.read = Mock(return_value='TOKEN')
+        mock_opener = Mock()
+        mock_opener.open = Mock(return_value=mock_url)
+        mock_build_opener.return_value = mock_opener
+        mock_get.return_value = Response()
+        mock_get.return_value._content = "[]"  # hack - empty response content
+        mock_get.return_value.status_code = 200  # Ok
+
+        # Act
+        client = PackagingRestApiClient('SERVER', 9000, 'USER', 'PASS', 'Global')
+        client.get_shell('shell')
+
+        # Assert
+        self.assertTrue(mock_get.called, 'Get should be called')
+        self.assertEqual(mock_get.call_args[0][0], 'http://SERVER:9000/API/Shells/shell')
+        self.assertEqual(mock_get.call_args[1]['headers']['Authorization'], 'Basic TOKEN')
+
+    @patch('cloudshell.rest.api.urllib2.build_opener')
+    @patch('cloudshell.rest.api.get')
+    def test_get_shell_feature_unavailable_raises_error(self, mock_get, mock_build_opener):
+        # Arrange
+        mock_url = Mock()
+        mock_url.read = Mock(return_value='TOKEN')
+        mock_opener = Mock()
+        mock_opener.open = Mock(return_value=mock_url)
+        mock_build_opener.return_value = mock_opener
+        mock_get.return_value = Response()
+        mock_get.return_value.status_code = 404  # Not Found
+
+        # Act Assert
+        client = PackagingRestApiClient('SERVER', 9000, 'USER', 'PASS', 'Global')
+        self.assertRaises(FeatureUnavailable, client.get_shell, 'shell')
+
+    @patch('cloudshell.rest.api.urllib2.build_opener')
+    @patch('cloudshell.rest.api.get')
+    def test_get_shell_shell_not_found_raises_error(self, mock_get, mock_build_opener):
+        # Arrange
+        mock_url = Mock()
+        mock_url.read = Mock(return_value='TOKEN')
+        mock_opener = Mock()
+        mock_opener.open = Mock(return_value=mock_url)
+        mock_build_opener.return_value = mock_opener
+        mock_get.return_value = Response()
+        mock_get.return_value.status_code = 400  # Bad Request
+
+        # Act Assert
+        client = PackagingRestApiClient('SERVER', 9000, 'USER', 'PASS', 'Global')
+        self.assertRaises(ShellNotFoundException, client.get_shell, 'shell')
+
+    @patch('cloudshell.rest.api.urllib2.build_opener')
+    @patch('cloudshell.rest.api.get')
+    def test_get_shell_unexpected_error_raises_error(self, mock_get, mock_build_opener):
+        # Arrange
+        mock_url = Mock()
+        mock_url.read = Mock(return_value='TOKEN')
+        mock_opener = Mock()
+        mock_opener.open = Mock(return_value=mock_url)
+        mock_build_opener.return_value = mock_opener
+        response_obj = type('', (Response,), {"text": 'amazing error'})()
+        mock_get.return_value = response_obj
+        mock_get.return_value.status_code = 405  # Method Not Allowed
+
+        # Act Assert
+        client = PackagingRestApiClient('SERVER', 9000, 'USER', 'PASS', 'Global')
+        try:
+            client.get_shell('shell')
+        except Exception as e:
+            self.assertEqual(e.message, 'amazing error')
