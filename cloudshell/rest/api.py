@@ -89,7 +89,7 @@ class PackagingRestApiClient(object):
         response = get(url,
                        headers={'Authorization': 'Basic ' + self.token})
 
-        if response.status_code == 404:  # Feature unavailable (probably due to cloudshell version below 8.2)
+        if response.status_code == 404 or response.status_code == 405:  # Feature unavailable (probably due to cloudshell version below 8.2)
             raise FeatureUnavailable()
 
         if response.status_code == 400:  # means shell not found
