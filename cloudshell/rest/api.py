@@ -26,7 +26,7 @@ class PackagingRestApiClient(object):
         request.add_header('Content-Type', 'application/x-www-form-urlencoded')
         backup = request.get_method
         request.get_method = lambda: 'PUT'
-        url = opener.open(request)
+        url = opener.open(request, timeout=10)
         self.token = url.read()
         self.token = re.sub(r'^"', '', self.token)
         self.token = re.sub(r'"$', '', self.token)
