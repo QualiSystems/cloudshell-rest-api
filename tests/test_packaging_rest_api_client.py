@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 from mock import patch, Mock
 from pyfakefs import fake_filesystem_unittest
 from requests import Response
@@ -215,3 +218,73 @@ class TestPackagingRestApiClient(fake_filesystem_unittest.TestCase):
         # Act Assert
         client = PackagingRestApiClient('SERVER', 9000, 'USER', 'PASS', 'Global')
         self.assertRaises(ShellNotFoundException, client.get_shell, 'shell')
+
+    @patch('cloudshell.rest.api.urllib2.build_opener')
+    @patch('cloudshell.rest.api.delete')
+    def test_delete_shell_success(self, mock_delete, mock_build_opener):
+        # Arrange
+        mock_url = Mock()
+        mock_url.read = Mock(return_value='TOKEN')
+        mock_opener = Mock()
+        mock_opener.open = Mock(return_value=mock_url)
+        mock_build_opener.return_value = mock_opener
+        mock_delete.return_value = Response()
+        mock_delete.return_value._content = "[]"  # hack - empty response content
+        mock_delete.return_value.status_code = 200  # Ok
+
+        # Act
+        client = PackagingRestApiClient('SERVER', 9000, 'USER', 'PASS', 'Global')
+        client.delete_shell("shell")
+
+        # Assert
+        self.assertTrue(mock_delete.called, 'Delete should be called')
+        self.assertEqual(mock_delete.call_args[0][0], 'http://SERVER:9000/API/Shells/shell')
+        self.assertEqual(mock_delete.call_args[1]['headers']['Authorization'], 'Basic TOKEN')
+
+    @patch('cloudshell.rest.api.urllib2.build_opener')
+    @patch('cloudshell.rest.api.delete')
+    def test_delete_shell_feature_unavailable_raises_error(self, mock_delete, mock_build_opener):
+        # Arrange
+        mock_url = Mock()
+        mock_url.read = Mock(return_value='TOKEN')
+        mock_opener = Mock()
+        mock_opener.open = Mock(return_value=mock_url)
+        mock_build_opener.return_value = mock_opener
+        mock_delete.return_value = Response()
+        mock_delete.return_value.status_code = 404  # Not Found
+
+        # Act Assert
+        client = PackagingRestApiClient('SERVER', 9000, 'USER', 'PASS', 'Global')
+        self.assertRaises(FeatureUnavailable, client.delete_shell, 'shell')
+
+    @patch('cloudshell.rest.api.urllib2.build_opener')
+    @patch('cloudshell.rest.api.delete')
+    def test_delete_shell_feature_unavailable_http_status_405_raises_error(self, mock_delete, mock_build_opener):
+        # Arrange
+        mock_url = Mock()
+        mock_url.read = Mock(return_value='TOKEN')
+        mock_opener = Mock()
+        mock_opener.open = Mock(return_value=mock_url)
+        mock_build_opener.return_value = mock_opener
+        mock_delete.return_value = Response()
+        mock_delete.return_value.status_code = 405  # Method Not Allowed
+
+        # Act Assert
+        client = PackagingRestApiClient('SERVER', 9000, 'USER', 'PASS', 'Global')
+        self.assertRaises(FeatureUnavailable, client.delete_shell, 'shell')
+
+    @patch('cloudshell.rest.api.urllib2.build_opener')
+    @patch('cloudshell.rest.api.delete')
+    def test_delete_shell_shell_not_found_raises_error(self, mock_delete, mock_build_opener):
+        # Arrange
+        mock_url = Mock()
+        mock_url.read = Mock(return_value='TOKEN')
+        mock_opener = Mock()
+        mock_opener.open = Mock(return_value=mock_url)
+        mock_build_opener.return_value = mock_opener
+        mock_delete.return_value = Response()
+        mock_delete.return_value.status_code = 400  # Bad Request
+
+        # Act Assert
+        client = PackagingRestApiClient('SERVER', 9000, 'USER', 'PASS', 'Global')
+        self.assertRaises(ShellNotFoundException, client.delete_shell, 'shell')

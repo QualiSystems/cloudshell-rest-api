@@ -1,7 +1,10 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 import os
 import re
 import urllib2
-from requests import post, put, get
+from requests import delete, get, post, put
 
 from cloudshell.rest.exceptions import ShellNotFoundException, FeatureUnavailable
 
@@ -100,6 +103,19 @@ class PackagingRestApiClient(object):
 
         return response.json()
 
+    def delete_shell(self, shell_name):
+        url = 'http://{0}:{1}/API/Shells/{2}'.format(self.ip, self.port, shell_name)
+        response = delete(url,
+                          headers={'Authorization': 'Basic ' + self.token})
+
+        if response.status_code == 404 or response.status_code == 405:  # Feature unavailable (probably due to cloudshell version below 9.2)
+            raise FeatureUnavailable()
+
+        if response.status_code == 400:  # means shell not found
+            raise ShellNotFoundException()
+
+        if response.status_code != 200:
+            raise Exception(response.text)
 
     @staticmethod
     def _urlencode(s):
