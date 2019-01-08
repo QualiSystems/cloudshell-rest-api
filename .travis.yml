@@ -7,12 +7,12 @@ install:
 script: coverage run --source=cloudshell_rest_api setup.py test
 after_success: coveralls
 deploy:
-    skip_cleanup: true
-    provider: pypi
-    distributions: sdist
-    user: Quali
-    password:
-      secure: KdA7g0OP68S63pZtF8YOZSW4LtqxOv4vmk0+AAXkZ/BJbW//fl6CuAbMgjk5cio6R+HrGrffFltSxWkOj2fSQnUOUpKAHFpmbdRCbhfpaG45AGW8v2eZ52EXZH01R6LQS+CvxHNUmUOiu1P85eO/KBS7FZkwbNmwo0Xaoo/n/EDZlhRPwYC2EilT29cNsEKB+joUeFFXiOmmOwGQYzo/qEab0CPnNsYhHP/PPWUx4Dj3DudfgMtGGJJVKfUshzkhuhJ7ENLlqaSN9Suz+eKYrI2JJ6eAptgH+pE22bSgLAM8RW8s11o7QWBs7yS0U1LhFegJWo0g9RUdB/4noFwocXkI23E9ekzrXS1v8ngja6+maXAJz8F18kIF0YODpYfX2NZ8Bb+2EFJ2nOi2BmqPW1c5j3gbtzaAO0NJ0vCcIX0w1PuS1RFxOx61YPq/U14PwmcUocb2XKh0Gx7aJd2t5Z4Px+ZGv0+tiEFliVt/GCg3PtDUJHPLMGFyGESTil2nGR3lhxFiAkMFCqnJSL0xTulWQ2qJfUPzJBZFY77xvIVwX5DOMfUYUMQoltgCAqGun6EPN5OB7h/3U4nrQ2FcER8Tbr/hPWR1BqDRf3pw/nGZm74OgdK6gO/jEgU+oZbFfTNwL55t/UkopAvzL/XjWHTCMjpwUFV9lCihU4ks9+c=
-    on:
-      branch: master
-      tags: false
+  skip_cleanup: true
+  provider: pypi
+  distributions: sdist
+  user: Quali
+  password:
+    secure: KGkDZWdiQvZfsU2IHhzy/aXumYKnXyr0et16pIdKrr7toVElaJcVO3bjl0gq6UuQfGzxeKrkIU7nqiovBQ4d8APO4F+9q+mYSexVCVnW1eBf8/L0O4Zq+olhIY0uNOPib+jYIFD/Wx0NdcxRQVwDgLn43z0rsJ2fNTuS3Q39bdXrD+ToowXNzFz3t9N412e8J/R5sUkVagrRDehZcRNrNcajRGl4GcYrpEng3BapMBJDy1rrt+wjKVW4NrkySk+NRnDLbPYt0xAkCT/AlTMA+imCzTQGqjAEzfWC/Sa1qvHK86pUgtrYuqoPJUE4OiERBdf+VRrtLIg28Lt8xpDJ8fBScDO6tngFE5A5aszQv8mR17JHpUrzMwkjXgSqdxbKbQOOfsUaI3M8cQfwkirkjJC+EEEWUPZqo4oeYJwb5I3zFZc9GOJUtxQ8N+zk0HEnA4WgM53Vz1RKHYYDOE2gnp59iC+Pim5xyJf8c1PUMZFr2IgzGOdRbiase2yNVxdx7rZ0/z7H+DKCs506dkfADsTxURvuAOV24h+/mmD8TPUjZm0oSo7MnMWOEGCgNPcQGAm87ZLSaH/IEwHMteGx32RcURk6sYbdlk29bl61GwvCmMWMgDMKQCItkvqQKQe+oUCg2FWStsppiWCvzlyAaNoUC1/LOKH4ROWDCmyWv+g=
+  on:
+    branch: master
+    tags: false
