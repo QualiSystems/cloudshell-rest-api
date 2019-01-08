@@ -19,6 +19,7 @@ Features
 
 * Add Shell - adds a new Shell Entity (supported from CloudShell 7.2)
 * Update Shell - updates an existing Shell Entity (supported from CloudShell 7.2)
+* Delete Shell - removes an existing Shell Entity (supported from CloudShell 9.2)
 * Get Installed Standards - gets a list of standards and matching versions installed on CloudShell (supported from CloudShell 8.1)
 
 Installation
