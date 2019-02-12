@@ -288,3 +288,55 @@ class TestPackagingRestApiClient(fake_filesystem_unittest.TestCase):
         # Act Assert
         client = PackagingRestApiClient('SERVER', 9000, 'USER', 'PASS', 'Global')
         self.assertRaises(ShellNotFoundException, client.delete_shell, 'shell')
+
+    @patch('cloudshell.rest.api.urllib2.build_opener')
+    @patch('cloudshell.rest.api.post')
+    def test_export_package(self, mock_post, mock_build_opener):
+        # prepare
+        mock_build_opener.return_value.open.return_value.read.return_value = 'TOKEN'
+
+        prepared_response = Response()
+        prepared_response.status_code = 201
+        prepared_response._content = 'zip package content'
+        mock_post.return_value = prepared_response
+
+        # act
+        client = PackagingRestApiClient('SERVER', 9000, 'USER', 'PASS', 'Global')
+        response = client.export_package(['topology_name'])
+
+        # verify
+        mock_post.assert_called_once_with(
+            'http://SERVER:9000/API/Package/ExportPackage',
+            headers={'Authorization': 'Basic TOKEN'},
+            data={'TopologyNames': ['topology_name']},
+        )
+        self.assertEqual(response, 'zip package content')
+
+    @patch('cloudshell.rest.api.urllib2.build_opener')
+    @patch('cloudshell.rest.api.post')
+    def test_import_package(self, mock_post, mock_build_opener):
+        # prepare
+        mock_build_opener.return_value.open.return_value.read.return_value = 'TOKEN'
+
+        prepared_response = Response()
+        prepared_response.status_code = 201
+        mock_post.return_value = prepared_response
+
+        package_zip = self.fs.create_file('work//package.zip', contents='ZIP CONTENT')
+
+        # act
+        client = PackagingRestApiClient('SERVER', 9000, 'USER', 'PASS', 'Global')
+        client.import_package('work//package.zip')
+
+        # verify
+        mock_post.assert_called_once()
+        self.assertEqual(
+            'http://SERVER:9000/API/Package/ImportPackage',
+            mock_post.call_args[0][0],
+        )
+        self.assertEqual(
+            {'Authorization': 'Basic TOKEN'},
+            mock_post.call_args[1]['headers'],
+        )
+        file_object = mock_post.call_args[1]['files']['file'].get_object()
+        self.assertEqual(package_zip, file_object)

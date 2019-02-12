@@ -117,6 +117,48 @@ class PackagingRestApiClient(object):
         if response.status_code != 200:
             raise Exception(response.text)
 
+    def export_package(self, topologies):
+        """Export a package with the topologies from the CloudShell
+
+        :type topologies: list[str]
+        :rtype: str
+        :return: package content
+        """
+        url = 'http://{0.ip}:{0.port}/API/Package/ExportPackage'.format(self)
+        response = post(
+            url,
+            headers={'Authorization': 'Basic ' + self.token},
+            data={'TopologyNames': topologies},
+        )
+
+        if response.status_code in (404, 405):
+            raise FeatureUnavailable()
+
+        if not response.ok:
+            raise Exception(response.text)
+
+        return response.content
+
+    def import_package(self, package_path):
+        """Import the package to the CloudShell
+
+        :type package_path: str
+        """
+        url = 'http://{0.ip}:{0.port}/API/Package/ImportPackage'.format(self)
+
+        with open(package_path, 'rb') as fo:
+            response = post(
+                url,
+                headers={'Authorization': 'Basic ' + self.token},
+                files={'file': fo},
+            )
+
+        if response.status_code in (404, 405):
+            raise FeatureUnavailable()
+
+        if not response.ok:
+            raise Exception(response.text)
+
     @staticmethod
     def _urlencode(s):
         return s.replace('+', '%2B').replace('/', '%2F').replace('=', '%3D')
