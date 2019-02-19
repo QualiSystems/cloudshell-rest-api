@@ -1,6 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+import json
+
 from mock import patch, Mock
 from pyfakefs import fake_filesystem_unittest
 from requests import Response
@@ -320,6 +322,7 @@ class TestPackagingRestApiClient(fake_filesystem_unittest.TestCase):
 
         prepared_response = Response()
         prepared_response.status_code = 201
+        prepared_response._content = json.dumps({'Success': True, 'ErrorMessage': None})
         mock_post.return_value = prepared_response
 
         package_zip = self.fs.create_file('work//package.zip', contents='ZIP CONTENT')
@@ -329,6 +332,39 @@ class TestPackagingRestApiClient(fake_filesystem_unittest.TestCase):
         client.import_package('work//package.zip')
 
         # verify
+        mock_post.assert_called_once()
+        self.assertEqual(
+            'http://SERVER:9000/API/Package/ImportPackage',
+            mock_post.call_args[0][0],
+        )
+        self.assertEqual(
+            {'Authorization': 'Basic TOKEN'},
+            mock_post.call_args[1]['headers'],
+        )
+        file_object = mock_post.call_args[1]['files']['file'].get_object()
+        self.assertEqual(package_zip, file_object)
+
+    @patch('cloudshell.rest.api.urllib2.build_opener')
+    @patch('cloudshell.rest.api.post')
+    def test_import_package_error(self, mock_post, mock_build_opener):
+        # prepare
+        mock_build_opener.return_value.open.return_value.read.return_value = 'TOKEN'
+
+        prepared_response = Response()
+        prepared_response.status_code = 201
+        prepared_response._content = json.dumps(
+            {'Success': False, 'ErrorMessage': 'Fail to find Name script'})
+        mock_post.return_value = prepared_response
+
+        package_zip = self.fs.create_file('work//package.zip', contents='ZIP CONTENT')
+
+        # act
+        client = PackagingRestApiClient('SERVER', 9000, 'USER', 'PASS', 'Global')
+
+        # verify
+        with self.assertRaisesRegexp(Exception, 'Fail to find Name script'):
+            client.import_package('work//package.zip')
+
         mock_post.assert_called_once()
         self.assertEqual(
             'http://SERVER:9000/API/Package/ImportPackage',
