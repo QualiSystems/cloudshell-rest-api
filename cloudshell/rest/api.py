@@ -159,6 +159,10 @@ class PackagingRestApiClient(object):
         if not response.ok:
             raise Exception(response.text)
 
+        if not response.json().get('Success'):
+            error_msg = response.json().get('ErrorMessage', 'Problem with importing the package')
+            raise Exception(error_msg)
+
     @staticmethod
     def _urlencode(s):
         return s.replace('+', '%2B').replace('/', '%2F').replace('=', '%3D')
