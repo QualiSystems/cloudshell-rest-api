@@ -132,8 +132,9 @@ class PackagingRestApiClient(object):
         url = "http://{0.ip}:{0.port}/API/Package/ExportPackage".format(self)
         response = post(
             url,
-            headers={"Authorization": "Basic " + self.token},
-            data={"TopologyNames": topologies},
+            headers={"Authorization": "Basic " + self.token,
+                     "Content-type": "application/json"},
+            json={"TopologyNames": topologies},
         )
 
         if response.status_code in (404, 405):
