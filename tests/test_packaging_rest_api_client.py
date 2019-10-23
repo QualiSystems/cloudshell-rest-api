@@ -309,8 +309,9 @@ class TestPackagingRestApiClient(fake_filesystem_unittest.TestCase):
         # verify
         mock_post.assert_called_once_with(
             'http://SERVER:9000/API/Package/ExportPackage',
-            headers={'Authorization': 'Basic TOKEN'},
-            data={'TopologyNames': ['topology_name']},
+            headers={'Authorization': 'Basic TOKEN',
+                     'Content-type': 'application/json'},
+            json={'TopologyNames': ['topology_name']},
         )
         self.assertEqual(response, 'zip package content')
 
