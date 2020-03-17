@@ -1,16 +1,26 @@
 language: python
-python: 2.7
-install:
-- pip install -r requirements.txt
-- pip install -r test_requirements.txt
-- pip install coveralls
-script: coverage run --source=cloudshell_rest_api setup.py test
+
+jobs:
+  include:
+    - python: 2.7
+      install:
+        - pip install -r requirements.txt
+        - pip install -r test_requirements.txt
+        - pip install coveralls
+      script: coverage run --source=cloudshell_rest_api setup.py test
+    - python: 3.7
+      install:
+        - pip install .[async]
+        - pip install -r test_requirements.txt
+        - pip instll coveralls
+      script: coverage run -m pytest pytests/test_async_api.py
 after_success: coveralls
 deploy:
   skip_cleanup: true
   provider: pypi
   distributions: sdist
   user: Quali
+  skip_existing: true
   password:
     secure: zngfiFC9WxBQEsVPriv/n6zJXNUTrm5WOCkeE43VWuyD/jXguZ1MHnb8hZXthH1mTGyBAkPbPmjN5KPWpAJIB1HC9S6QbnzaXRA22BYEwKk1NpaesbZ5Ywmg8cx60+zgjaG5aBj4yUMsLSR1xdyoZodMR6eO7awW+59cyJSqTZDXcsGwvQUHwPERdbKIqPllcHgWoXEFq+/1o6gyIartgIelpQo1RvtjPjrGvEYw80RvslKsorxH4ghsEe6nEYarnA0kwGeaYpsjKzQqWSwyjizeI4kpnTTKhpqLgFkJyVNMEaEXCi/lbp0eRMY21ZW7TSmMRCRzKGAn9ByrvOSBiqFtGz9y28tecRttYU49EH80zqBtR6Csfuahl83Vzy2ZxeWiU+Rbu9Q+b9oTS7Md4NJYPrWL5iIsuyhQFb8/He/9k8bGq/N6Vm4j73n72oySp7OPUlVmTZqXSd5h8XjCmhy+7/zo/ZZO+gm34omrCYnO+XMgXRs4lWxmmdJW54sePLc1TFLSA72GnYoiTUc/6M6PljTcqBsymAv1tumAOqIAHPl2F676S0G/CuD51kduQySHctePgStqSsrzJB0Ymm/GKkw7vCuyHeRyXEbzO1qxbguZ0XMdLuBKaxOUd+ph5tTuI/iCm3C0LeAOugEI4E5qawNuflqw3Cp5ROI2528=
   on:

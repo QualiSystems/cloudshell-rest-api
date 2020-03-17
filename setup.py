@@ -26,6 +26,13 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     install_requires=get_file_content('requirements.txt'),
+    extras_require={
+        "async": [
+            "aiohttp>=3.6.2,<3.7",
+            "aiofiles>=0.4,<0.5",
+            "async-property>=0.2.1,<0.3"
+        ],
+    },
     license="Apache Software License 2.0",
     zip_safe=False,
     keywords='cloudshell quali sandbox cloud rest api',
