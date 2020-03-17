@@ -1,2 +1,4 @@
 mock
 pyfakefs
+pytest; python_version >= '3.7'
+pytest-asyncio; python_version >= '3.7'
