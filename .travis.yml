@@ -12,7 +12,7 @@ jobs:
       install:
         - pip install .[async]
         - pip install -r test_requirements.txt
-        - pip instll coveralls
+        - pip install coveralls
       script: coverage run -m pytest pytests/test_async_api.py
 after_success: coveralls
 deploy:
