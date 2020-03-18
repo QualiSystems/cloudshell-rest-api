@@ -13,7 +13,7 @@ jobs:
         - pip install .[async]
         - pip install -r test_requirements.txt
         - pip install coveralls
-      script: coverage run -m pytest pytests/test_async_api.py
+      script: pytest pytests --cov cloudshell
 after_success: coveralls
 deploy:
   skip_cleanup: true
