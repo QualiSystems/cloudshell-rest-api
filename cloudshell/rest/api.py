@@ -41,11 +41,11 @@ class PackagingRestApiClient(object):
         return {"Authorization": "Basic {}".format(self._token)}
 
     def _get_token(self):
-        url = urljoin(self._api_url, 'Auth/Login')
+        url = urljoin(self._api_url, "Auth/Login")
         req_data = {
-            'username': self._username,
-            'password': self._password,
-            'domain': self._domain,
+            "username": self._username,
+            "password": self._password,
+            "domain": self._domain,
         }
         resp = requests.put(url, data=req_data)
         token = resp.text
@@ -70,7 +70,7 @@ class PackagingRestApiClient(object):
         :param shell_path:
         :return:
         """
-        with open(shell_path, 'rb') as f:
+        with open(shell_path, "rb") as f:
             self.add_shell_from_buffer(f)
 
     def update_shell_from_buffer(self, file_obj, shell_name):
@@ -96,7 +96,7 @@ class PackagingRestApiClient(object):
         :return:
         """
         shell_name = shell_name or os.path.basename(shell_path).rsplit(".", 1)[0]
-        with open(shell_path, 'rb') as f:
+        with open(shell_path, "rb") as f:
             self.update_shell_from_buffer(f, shell_name)
 
     def get_installed_standards(self):
@@ -153,7 +153,7 @@ class PackagingRestApiClient(object):
         :type topologies: list[str]
         :type file_path: str
         """
-        with open(file_path, 'wb') as f:
+        with open(file_path, "wb") as f:
             f.write(self.export_package(topologies))
 
     def import_package_from_buffer(self, file_obj):
@@ -174,5 +174,5 @@ class PackagingRestApiClient(object):
 
         :type package_path: str
         """
-        with open(package_path, 'rb') as f:
+        with open(package_path, "rb") as f:
             self.import_package_from_buffer(f)

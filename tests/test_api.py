@@ -114,7 +114,7 @@ def test_add_shell_from_buffer(rest_api_client, mocked_responses):
 
     assert len(mocked_responses.calls) == 2
     body = mocked_responses.calls[1].request.body
-    assert re.search(b'filename=["\']file["\']', body)
+    assert re.search(b"filename=[\"']file[\"']", body)
     pattern = b"\\s" + file_content + b"\\s"
     assert re.search(pattern, body)
 
@@ -154,7 +154,7 @@ def test_add_shell(rest_api_client, mocked_responses, tmp_path):
 
     assert len(mocked_responses.calls) == 2
     body = mocked_responses.calls[1].request.body
-    pattern = b'filename=["\']' + file_name.encode() + b'["\']'
+    pattern = b"filename=[\"']" + file_name.encode() + b"[\"']"
     assert re.search(pattern, body)
     pattern = b"\\s" + file_content + b"\\s"
     assert re.search(pattern, body)
@@ -176,7 +176,7 @@ def test_update_shell_from_buffer(rest_api_client, mocked_responses):
 
     assert len(mocked_responses.calls) == 2
     body = mocked_responses.calls[1].request.body
-    assert re.search(b'filename=["\']file["\']', body)
+    assert re.search(b"filename=[\"']file[\"']", body)
     pattern = b"\\s" + file_content + b"\\s"
     assert re.search(pattern, body)
 
@@ -234,7 +234,7 @@ def test_update_shell(rest_api_client, mocked_responses, tmp_path):
 
     assert len(mocked_responses.calls) == 2
     body = mocked_responses.calls[1].request.body
-    pattern = b'filename=["\']' + file_name.encode() + b'["\']'
+    pattern = b"filename=[\"']" + file_name.encode() + b"[\"']"
     assert re.search(pattern, body)
     pattern = b"\\s" + file_content + b"\\s"
     assert re.search(pattern, body)
@@ -399,7 +399,7 @@ def test_import_package_from_buffer(rest_api_client, mocked_responses):
 
     assert len(mocked_responses.calls) == 2
     body = mocked_responses.calls[1].request.body
-    assert re.search(b'filename=["\']file["\']', body)
+    assert re.search(b"filename=[\"']file[\"']", body)
     pattern = b"\\s" + file_content + b"\\s"
     assert re.search(pattern, body)
 
@@ -449,7 +449,7 @@ def test_import_package(rest_api_client, mocked_responses, tmp_path):
 
     assert len(mocked_responses.calls) == 2
     body = mocked_responses.calls[1].request.body
-    pattern = b'filename=["\']' + file_name.encode() + b'["\']'
+    pattern = b"filename=[\"']" + file_name.encode() + b"[\"']"
     assert re.search(pattern, body)
     pattern = b"\\s" + file_content + b"\\s"
     assert re.search(pattern, body)
