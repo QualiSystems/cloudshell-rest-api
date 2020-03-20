@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Union, BinaryIO, List, Optional
+from typing import BinaryIO, List, Optional, Union
 from urllib.parse import urljoin
 
 import aiofiles

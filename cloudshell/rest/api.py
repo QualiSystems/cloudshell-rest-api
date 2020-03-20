@@ -4,7 +4,9 @@ import requests
 from cached_property import cached_property
 
 from cloudshell.rest.exceptions import (
-    ShellNotFoundException, FeatureUnavailable, PackagingRestApiError
+    FeatureUnavailable,
+    PackagingRestApiError,
+    ShellNotFoundException,
 )
 
 try:
