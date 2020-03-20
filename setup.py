@@ -68,4 +68,7 @@ setup(
     test_suite="tests",
     tests_require=get_file_content("test_requirements.txt"),
     setup_requires=["setuptools>=40"],
+    python_requires=(
+        ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*, !=3.6.*, <4"
+    ),
 )
