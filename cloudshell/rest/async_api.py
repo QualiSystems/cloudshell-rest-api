@@ -1,3 +1,7 @@
+"""You need to install extra dependencies for async API client.
+
+`pip install cloudshell-rest-api[async]`
+"""
 from pathlib import Path
 from typing import BinaryIO, List, Optional, Union
 from urllib.parse import urljoin
