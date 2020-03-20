@@ -10,14 +10,12 @@ def get_file_content(file_name):
 
 
 readme = get_file_content("README.rst")
-
 history = get_file_content("HISTORY.rst")
-
-exec(open("cloudshell/version.py").read())
+version = get_file_content("version.txt")
 
 setup(
     name="cloudshell-rest-api",
-    version=__version__,
+    version=version,
     description="Python client for the CloudShell REST API",
     long_description=readme + "\n\n" + history,
     author="Boris Modylevsky",

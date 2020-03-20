@@ -42,7 +42,8 @@ def mocked_responses():
 
 
 def test_login(rest_api_client, mocked_responses):
-    """
+    """Test login.
+
     :type rest_api_client: PackagingRestApiClient
     :type mocked_responses: responses.RequestsMock
     """
@@ -54,7 +55,8 @@ def test_login(rest_api_client, mocked_responses):
 
 
 def test_get_installed_standards(rest_api_client, mocked_responses):
-    """
+    """Test get installed standards.
+
     :type rest_api_client: PackagingRestApiClient
     :type mocked_responses: responses.RequestsMock
     """
@@ -89,7 +91,8 @@ def test_get_installed_standards_failed(
     rest_api_client,
     mocked_responses,
 ):
-    """
+    """Test get installed standards fails.
+
     :type rest_api_client: PackagingRestApiClient
     :type mocked_responses: responses.RequestsMock
     """
@@ -101,7 +104,8 @@ def test_get_installed_standards_failed(
 
 
 def test_add_shell_from_buffer(rest_api_client, mocked_responses):
-    """
+    """Test add a Shell from a buffer.
+
     :type rest_api_client: PackagingRestApiClient
     :type mocked_responses: responses.RequestsMock
     """
@@ -120,7 +124,8 @@ def test_add_shell_from_buffer(rest_api_client, mocked_responses):
 
 
 def test_add_shell_from_buffer_fails(rest_api_client, mocked_responses):
-    """
+    """Test add a Shell from a buffer fails.
+
     :type rest_api_client: PackagingRestApiClient
     :type mocked_responses: responses.RequestsMock
     """
@@ -134,7 +139,8 @@ def test_add_shell_from_buffer_fails(rest_api_client, mocked_responses):
 
 
 def test_add_shell(rest_api_client, mocked_responses, tmp_path):
-    """
+    """Test add a Shell.
+
     :type rest_api_client: PackagingRestApiClient
     :type mocked_responses: responses.RequestsMock
     :type tmp_path: pathlib2.Path
@@ -161,7 +167,8 @@ def test_add_shell(rest_api_client, mocked_responses, tmp_path):
 
 
 def test_update_shell_from_buffer(rest_api_client, mocked_responses):
-    """
+    """Test update a Shell from a buffer.
+
     :type rest_api_client: PackagingRestApiClient
     :type mocked_responses: responses.RequestsMock
     """
@@ -201,7 +208,8 @@ def test_update_shell_from_buffer_fails(
     rest_api_client,
     mocked_responses,
 ):
-    """
+    """Test update a Shell from a buffer fails.
+
     :type rest_api_client: PackagingRestApiClient
     :type mocked_responses: responses.RequestsMock
     """
@@ -214,7 +222,8 @@ def test_update_shell_from_buffer_fails(
 
 
 def test_update_shell(rest_api_client, mocked_responses, tmp_path):
-    """
+    """Test update a Shell.
+
     :type rest_api_client: PackagingRestApiClient
     :type mocked_responses: responses.RequestsMock
     :type tmp_path: pathlib2.Path
@@ -241,7 +250,8 @@ def test_update_shell(rest_api_client, mocked_responses, tmp_path):
 
 
 def test_get_shell(rest_api_client, mocked_responses):
-    """
+    """Test get a Shell.
+
     :type rest_api_client: PackagingRestApiClient
     :type mocked_responses: responses.RequestsMock
     """
@@ -271,7 +281,8 @@ def test_get_shell(rest_api_client, mocked_responses):
 def test_get_shell_fails(
     status_code, expected_err_class, rest_api_client, mocked_responses
 ):
-    """
+    """Test get a Shell fails.
+
     :type rest_api_client: PackagingRestApiClient
     :type mocked_responses: responses.RequestsMock
     """
@@ -284,7 +295,8 @@ def test_get_shell_fails(
 
 
 def test_delete_shell(rest_api_client, mocked_responses):
-    """
+    """Test delete a Shell.
+
     :type rest_api_client: PackagingRestApiClient
     :type mocked_responses: responses.RequestsMock
     """
@@ -311,7 +323,8 @@ def test_delete_shell_fails(
     rest_api_client,
     mocked_responses,
 ):
-    """
+    """Test delete a Shell fails.
+
     :type rest_api_client: PackagingRestApiClient
     :type mocked_responses: responses.RequestsMock
     """
@@ -324,7 +337,8 @@ def test_delete_shell_fails(
 
 
 def test_export_package(rest_api_client, mocked_responses):
-    """
+    """Test export a package.
+
     :type rest_api_client: PackagingRestApiClient
     :type mocked_responses: responses.RequestsMock
     """
@@ -354,7 +368,8 @@ def test_export_package_fails(
     rest_api_client,
     mocked_responses,
 ):
-    """
+    """Test export a package fails.
+
     :type rest_api_client: PackagingRestApiClient
     :type mocked_responses: responses.RequestsMock
     """
@@ -366,7 +381,8 @@ def test_export_package_fails(
 
 
 def test_export_package_to_file(rest_api_client, mocked_responses, tmp_path):
-    """
+    """Test export a package to a file.
+
     :type rest_api_client: PackagingRestApiClient
     :type mocked_responses: responses.RequestsMock
     :type tmp_path: pathlib2.Path
@@ -386,7 +402,8 @@ def test_export_package_to_file(rest_api_client, mocked_responses, tmp_path):
 
 
 def test_import_package_from_buffer(rest_api_client, mocked_responses):
-    """
+    """Test import a package from the buffer.
+
     :type rest_api_client: PackagingRestApiClient
     :type mocked_responses: responses.RequestsMock
     """
@@ -419,7 +436,8 @@ def test_import_package_from_buffer_fails(
     rest_api_client,
     mocked_responses,
 ):
-    """
+    """Test import a package from the buffer fails.
+
     :type rest_api_client: PackagingRestApiClient
     :type mocked_responses: responses.RequestsMock
     """
@@ -433,7 +451,8 @@ def test_import_package_from_buffer_fails(
 
 
 def test_import_package(rest_api_client, mocked_responses, tmp_path):
-    """
+    """Test import a package.
+
     :type rest_api_client: PackagingRestApiClient
     :type mocked_responses: responses.RequestsMock
     :type tmp_path: pathlib2.Path
