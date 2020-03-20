@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 from aiohttp import web
 from aiohttp.test_utils import TestServer
+from pytests.conftest import PASSWORD, USERNAME, PackagingApiTestServer
 
 from cloudshell.rest.async_api import AsyncPackagingRestApiClient
 from cloudshell.rest.exceptions import (
@@ -11,7 +12,6 @@ from cloudshell.rest.exceptions import (
     PackagingRestApiError,
     ShellNotFoundException,
 )
-from pytests.conftest import PackagingApiTestServer, USERNAME, PASSWORD
 
 
 @pytest.mark.asyncio
