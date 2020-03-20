@@ -145,7 +145,6 @@ class AsyncPackagingRestApiClient:
                     raise FeatureUnavailable()
                 elif resp.status != 200:
                     raise PackagingRestApiError(await resp.text())
-                await resp.json()
 
     async def import_package(self, package_path: Union[Path, str]):
         async with aiofiles.open(package_path, "rb") as f:
