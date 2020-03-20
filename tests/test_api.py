@@ -336,7 +336,7 @@ def test_export_package(rest_api_client, mocked_responses):
     assert rest_api_client.export_package(topologies) == byte_data
     assert len(mocked_responses.calls) == 2
     body = mocked_responses.calls[1].request.body
-    assert body == json.dumps({"TopologyNames": topologies})
+    assert body == json.dumps({"TopologyNames": topologies}).encode()
 
 
 @pytest.mark.parametrize(
@@ -346,7 +346,7 @@ def test_export_package(rest_api_client, mocked_responses):
         (500, "Internal server error", PackagingRestApiError, "Internal server error"),
     ),
 )
-def test_export_package(
+def test_export_package_fails(
     status_code,
     err_msg,
     expected_err_class,
