@@ -17,8 +17,8 @@ except ImportError:
 
 class PackagingRestApiClient(object):
     def __init__(self, ip, port, username, password, domain):
-        """
-        Logs into CloudShell using REST API
+        """Initialize REST API handler.
+
         :param ip: CloudShell server IP or host name
         :param port: port, usually 9000
         :param username: CloudShell username
@@ -64,11 +64,10 @@ class PackagingRestApiClient(object):
             raise PackagingRestApiError(msg)
 
     def add_shell(self, shell_path):
-        """
-        Adds a new Shell Entity to CloudShell
+        """Adds a new Shell Entity to CloudShell.
+
         If the shell exists, exception will be thrown
-        :param shell_path:
-        :return:
+        :type shell_path: str
         """
         with open(shell_path, "rb") as f:
             self.add_shell_from_buffer(f)
@@ -89,20 +88,19 @@ class PackagingRestApiClient(object):
             raise PackagingRestApiError(msg)
 
     def update_shell(self, shell_path, shell_name=None):
-        """
-        Updates an existing Shell Entity in CloudShell
-        :param shell_path: The path to the shell file
-        :param shell_name: The shell name. if not supplied the shell name is derived from the shell path
-        :return:
+        """Updates an existing Shell Entity in CloudShell.
+
+        :type shell_path: str
+        :type shell_name: str
         """
         shell_name = shell_name or os.path.basename(shell_path).rsplit(".", 1)[0]
         with open(shell_path, "rb") as f:
             self.update_shell_from_buffer(f, shell_name)
 
     def get_installed_standards(self):
-        """
-        Gets all standards installed on CloudShell
-        :return:
+        """Gets all standards installed on CloudShell.
+
+        :rtype: dict
         """
         url = urljoin(self._api_url, "Standards")
         resp = requests.get(url, headers=self._headers)
@@ -113,6 +111,7 @@ class PackagingRestApiClient(object):
         return resp.json()
 
     def get_shell(self, shell_name):
+        """Get a Shell's information."""
         url = urljoin(self._api_url, "Shells/{}".format(shell_name))
         resp = requests.get(url, headers=self._headers)
         if resp.status_code == 404:
@@ -122,6 +121,7 @@ class PackagingRestApiClient(object):
         return resp.json()
 
     def delete_shell(self, shell_name):
+        """Delete a Shell from the CloudShell."""
         url = urljoin(self._api_url, "Shells/{}".format(shell_name))
         resp = requests.delete(url, headers=self._headers)
         if resp.status_code == 404:
@@ -132,7 +132,7 @@ class PackagingRestApiClient(object):
             raise PackagingRestApiError(resp.text)
 
     def export_package(self, topologies):
-        """Export a package with the topologies from the CloudShell
+        """Export a package with the topologies from the CloudShell.
 
         :type topologies: list[str]
         :rtype: bytes
@@ -157,7 +157,7 @@ class PackagingRestApiClient(object):
             f.write(self.export_package(topologies))
 
     def import_package_from_buffer(self, file_obj):
-        """Import the package from buffer to the CloudShell
+        """Import the package from buffer to the CloudShell.
 
         :type file_obj: io.BinaryIO|bytes
         """
