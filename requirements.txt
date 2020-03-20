@@ -1,2 +1,2 @@
 requests>=2.23,<3
-cached_property>=1.5,<2
+cached-property>=1.5,<2
