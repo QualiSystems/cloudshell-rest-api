@@ -472,3 +472,51 @@ def test_import_package(rest_api_client, mocked_responses, tmp_path):
     assert re.search(pattern, body)
     pattern = b"\\s" + file_content + b"\\s"
     assert re.search(pattern, body)
+
+
+def test_upload_environment_zip_data_is_deprecated(rest_api_client, mocked_responses):
+    """Test upload_environment_zip_data is deprecated.
+
+    :type rest_api_client: PackagingRestApiClient
+    :type mocked_responses: responses.RequestsMock
+    """
+    url = urljoin(API_URL, "Package/ImportPackage")
+    mocked_responses.add(responses.POST, url, json={"Success": True})
+    file_content = b"test_buffer"
+    buffer = io.BytesIO(file_content)
+
+    with pytest.deprecated_call():
+        rest_api_client.upload_environment_zip_data(buffer)
+
+    assert len(mocked_responses.calls) == 2
+    body = mocked_responses.calls[1].request.body
+    assert re.search(b"filename=[\"']file[\"']", body)
+    pattern = b"\\s" + file_content + b"\\s"
+    assert re.search(pattern, body)
+
+
+def test_upload_environment_zip_file_is_deprecated(
+    rest_api_client, mocked_responses, tmp_path
+):
+    """Test import a package.
+
+    :type rest_api_client: PackagingRestApiClient
+    :type mocked_responses: responses.RequestsMock
+    :type tmp_path: pathlib2.Path
+    """
+    url = urljoin(API_URL, "Package/ImportPackage")
+    mocked_responses.add(responses.POST, url, json={"Success": True})
+    file_content = b"test_buffer"
+    file_name = "package.zip"
+    file_path = tmp_path / file_name
+    file_path.write_bytes(file_content)
+
+    with pytest.deprecated_call():
+        rest_api_client.upload_environment_zip_file(str(file_path))
+
+    assert len(mocked_responses.calls) == 2
+    body = mocked_responses.calls[1].request.body
+    pattern = b"filename=[\"']" + file_name.encode() + b"[\"']"
+    assert re.search(pattern, body)
+    pattern = b"\\s" + file_content + b"\\s"
+    assert re.search(pattern, body)

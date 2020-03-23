@@ -1,4 +1,5 @@
 import os
+import warnings
 
 import requests
 from cached_property import cached_property
@@ -176,3 +177,16 @@ class PackagingRestApiClient(object):
         """
         with open(package_path, "rb") as f:
             self.import_package_from_buffer(f)
+
+    def upload_environment_zip_data(self, zipdata):
+        warnings.warn(
+            "This method is deprecated, use import_package_from_buffer instead",
+            DeprecationWarning,
+        )
+        self.import_package_from_buffer(zipdata)
+
+    def upload_environment_zip_file(self, zipfilename):
+        warnings.warn(
+            "This method is deprecated, use import_package instead", DeprecationWarning
+        )
+        self.import_package(zipfilename)
