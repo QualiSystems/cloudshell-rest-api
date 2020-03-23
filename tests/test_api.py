@@ -304,11 +304,20 @@ def test_get_shell(rest_api_client, mocked_responses):
 
 
 @pytest.mark.parametrize(
-    ("status_code", "expected_err_class"),
-    ((404, FeatureUnavailable), (400, ShellNotFoundException)),
+    ("status_code", "err_msg", "expected_err_class", "expected_err_text"),
+    (
+        (404, "", FeatureUnavailable, ""),
+        (400, "", ShellNotFoundException, ""),
+        (500, "Internal server error", PackagingRestApiError, "Internal server error"),
+    ),
 )
 def test_get_shell_fails(
-    status_code, expected_err_class, rest_api_client, mocked_responses
+    status_code,
+    err_msg,
+    expected_err_class,
+    expected_err_text,
+    rest_api_client,
+    mocked_responses,
 ):
     """Test get a Shell fails.
 
