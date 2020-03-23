@@ -126,6 +126,8 @@ class PackagingRestApiClient(object):
             raise FeatureUnavailable()
         elif resp.status_code == 400:
             raise ShellNotFoundException()
+        elif resp.status_code != 200:
+            raise PackagingRestApiError(resp.text)
         return resp.json()
 
     def delete_shell(self, shell_name):
