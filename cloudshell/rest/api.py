@@ -6,6 +6,7 @@ from cached_property import cached_property
 
 from cloudshell.rest.exceptions import (
     FeatureUnavailable,
+    LoginFailedError,
     PackagingRestApiError,
     ShellNotFoundException,
 )
@@ -49,6 +50,12 @@ class PackagingRestApiClient(object):
             "domain": self._domain,
         }
         resp = requests.put(url, data=req_data)
+        if resp.status_code == 401:
+            raise LoginFailedError(
+                resp.url, resp.status_code, resp.text, resp.headers, None
+            )
+        elif resp.status_code != 200:
+            raise PackagingRestApiError(resp.text)
         token = resp.text
         return token.strip("'\"")
 
