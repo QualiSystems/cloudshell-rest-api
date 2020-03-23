@@ -8,14 +8,17 @@ import responses
 from cloudshell.rest.api import PackagingRestApiClient
 from cloudshell.rest.exceptions import (
     FeatureUnavailable,
+    LoginFailedError,
     PackagingRestApiError,
     ShellNotFoundException,
 )
 
 try:
     from urlparse import urljoin, parse_qs
+    from urllib2 import HTTPError
 except ImportError:
     from urllib.parse import urljoin, parse_qs
+    from urllib.error import HTTPError
 
 
 HOST = "host"
@@ -39,6 +42,9 @@ def mocked_responses():
     with responses.RequestsMock() as rsps:
         rsps.add(responses.PUT, url, body=token)
         yield rsps
+        login_call = rsps.calls[0]
+        assert login_call.request.url == url
+        assert login_call.response.text == token
 
 
 def test_login(rest_api_client, mocked_responses):
@@ -52,6 +58,29 @@ def test_login(rest_api_client, mocked_responses):
     req = mocked_responses.calls[0].request
     body = "username={USERNAME}&domain={DOMAIN}&password={PASSWORD}".format(**globals())
     assert parse_qs(req.body) == parse_qs(body)
+
+
+@pytest.mark.parametrize(
+    ("status_code", "text_msg", "expected_err_class", "expected_err_text"),
+    (
+        (401, "", LoginFailedError, ""),
+        (401, "", HTTPError, ""),  # check that returns error used in shellfoundry
+        (500, "Internal server error", PackagingRestApiError, "Internal server error"),
+    ),
+)
+def test_login_failed(
+    status_code, text_msg, expected_err_class, expected_err_text, rest_api_client
+):
+    """Test login failed.
+
+    :type rest_api_client: PackagingRestApiClient
+    """
+    url = urljoin(API_URL, "Auth/Login")
+    with responses.RequestsMock() as rsps:
+        rsps.add(responses.PUT, url, body=text_msg, status=status_code)
+
+        with pytest.raises(expected_err_class, match=expected_err_text):
+            rest_api_client._get_token()
 
 
 def test_get_installed_standards(rest_api_client, mocked_responses):
