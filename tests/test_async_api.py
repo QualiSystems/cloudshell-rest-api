@@ -1,5 +1,6 @@
 import io
 from pathlib import Path
+from urllib.error import HTTPError
 
 import pytest
 from aiohttp import web
@@ -8,6 +9,7 @@ from aiohttp.test_utils import TestServer
 from cloudshell.rest.async_api import AsyncPackagingRestApiClient
 from cloudshell.rest.exceptions import (
     FeatureUnavailable,
+    LoginFailedError,
     PackagingRestApiError,
     ShellNotFoundException,
 )
@@ -15,12 +17,14 @@ from cloudshell.rest.exceptions import (
 HOST = "localhost"
 USERNAME = "test_user"
 PASSWORD = "test_password"
+PORT = 9000
+DOMAIN = "Global"
 
 
 class PackagingApiTestServer:
     def __init__(self, app: web.Application):
         self.app = app
-        self.port = AsyncPackagingRestApiClient.DEFAULT_PORT
+        self.port = PORT
 
     def start_server(self):
         return TestServer(self.app, port=self.port)
@@ -28,7 +32,7 @@ class PackagingApiTestServer:
 
 @pytest.fixture()
 def rest_api_client():
-    return AsyncPackagingRestApiClient(HOST, USERNAME, PASSWORD)
+    return AsyncPackagingRestApiClient(HOST, PORT, USERNAME, PASSWORD, DOMAIN)
 
 
 @pytest.fixture()
@@ -58,11 +62,38 @@ async def test_login(rest_api_client: AsyncPackagingRestApiClient):
     app = web.Application()
     app.router.add_route("put", "/API/Auth/Login", login)
 
-    async with TestServer(app, port=AsyncPackagingRestApiClient.DEFAULT_PORT):
+    async with TestServer(app, port=PORT):
         assert await rest_api_client._get_token() == token
 
     expected_text = f"username={USERNAME}&password={PASSWORD}&domain=Global"
     assert received_data["text"] == expected_text
+
+
+@pytest.mark.parametrize(
+    ("status_code", "err_msg", "expected_err_class", "expected_err_text"),
+    (
+        (401, "", LoginFailedError, ""),
+        (401, "", HTTPError, ""),  # check that returns error used in shellfoundry
+        (500, "Internal server error", PackagingRestApiError, "Internal server error"),
+    ),
+)
+@pytest.mark.asyncio
+async def test_login_failed(
+    status_code,
+    err_msg,
+    expected_err_class,
+    expected_err_text,
+    rest_api_client: AsyncPackagingRestApiClient,
+):
+    async def login(req: web.Request):
+        return web.Response(text=err_msg, status=status_code)
+
+    app = web.Application()
+    app.router.add_route("put", "/API/Auth/Login", login)
+
+    async with TestServer(app, port=PORT):
+        with pytest.raises(expected_err_class, match=expected_err_text):
+            await rest_api_client._get_token()
 
 
 @pytest.mark.asyncio
@@ -290,21 +321,27 @@ async def test_get_shell(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    ("status_code", "expected_err_class"),
-    ((404, FeatureUnavailable), (400, ShellNotFoundException)),
+    ("status_code", "err_msg", "expected_err_class", "expected_err_text"),
+    (
+        (404, "", FeatureUnavailable, ""),
+        (400, "", ShellNotFoundException, ""),
+        (500, "Internal server error", PackagingRestApiError, "Internal server error"),
+    ),
 )
 async def test_get_shell_fails(
     status_code,
+    err_msg,
     expected_err_class,
+    expected_err_text,
     rest_api_client: AsyncPackagingRestApiClient,
     test_server: PackagingApiTestServer,
 ):
     async def get_shell(req: web.Request):
-        return web.Response(status=status_code)
+        return web.Response(status=status_code, text=err_msg)
 
     test_server.app.router.add_route("get", "/API/Shells/{name}", get_shell)
     async with test_server.start_server():
-        with pytest.raises(expected_err_class):
+        with pytest.raises(expected_err_class, match=expected_err_text):
             await rest_api_client.get_shell("shell_name")
 
 

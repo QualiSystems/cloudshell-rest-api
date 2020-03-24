@@ -61,7 +61,7 @@ def test_login(rest_api_client, mocked_responses):
 
 
 @pytest.mark.parametrize(
-    ("status_code", "text_msg", "expected_err_class", "expected_err_text"),
+    ("status_code", "err_msg", "expected_err_class", "expected_err_text"),
     (
         (401, "", LoginFailedError, ""),
         (401, "", HTTPError, ""),  # check that returns error used in shellfoundry
@@ -69,7 +69,7 @@ def test_login(rest_api_client, mocked_responses):
     ),
 )
 def test_login_failed(
-    status_code, text_msg, expected_err_class, expected_err_text, rest_api_client
+    status_code, err_msg, expected_err_class, expected_err_text, rest_api_client
 ):
     """Test login failed.
 
@@ -77,7 +77,7 @@ def test_login_failed(
     """
     url = urljoin(API_URL, "Auth/Login")
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.PUT, url, body=text_msg, status=status_code)
+        rsps.add(responses.PUT, url, body=err_msg, status=status_code)
 
         with pytest.raises(expected_err_class, match=expected_err_text):
             rest_api_client._get_token()
