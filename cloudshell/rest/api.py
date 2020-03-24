@@ -10,6 +10,7 @@ from cloudshell.rest.exceptions import (
     PackagingRestApiError,
     ShellNotFoundException,
 )
+from cloudshell.rest.models import ShellInfo, StandardInfo
 
 try:
     from urlparse import urljoin
@@ -108,7 +109,7 @@ class PackagingRestApiClient(object):
     def get_installed_standards(self):
         """Gets all standards installed on CloudShell.
 
-        :rtype: dict
+        :rtype: list
         """
         url = urljoin(self._api_url, "Standards")
         resp = requests.get(url, headers=self._headers)
@@ -118,8 +119,19 @@ class PackagingRestApiClient(object):
             raise PackagingRestApiError(resp.text)
         return resp.json()
 
+    def get_installed_standards_as_models(self):
+        """Get all standards installed on CloudShell as models.
+
+        :rtype: list[StandardInfo]
+        """
+        return [StandardInfo(s) for s in self.get_installed_standards()]
+
     def get_shell(self, shell_name):
-        """Get a Shell's information."""
+        """Get a Shell's information.
+
+        :type shell_name: str
+        :rtype: dict
+        """
         url = urljoin(self._api_url, "Shells/{}".format(shell_name))
         resp = requests.get(url, headers=self._headers)
         if resp.status_code == 404:
@@ -129,6 +141,14 @@ class PackagingRestApiClient(object):
         elif resp.status_code != 200:
             raise PackagingRestApiError(resp.text)
         return resp.json()
+
+    def get_shell_as_model(self, shell_name):
+        """Get a Shell's information as model.
+
+        :type shell_name: str
+        :rtype: ShellInfo
+        """
+        return ShellInfo(self.get_shell(shell_name))
 
     def delete_shell(self, shell_name):
         """Delete a Shell from the CloudShell."""

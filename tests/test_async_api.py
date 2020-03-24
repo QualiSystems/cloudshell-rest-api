@@ -119,6 +119,37 @@ async def test_get_installed_standards(
 
 
 @pytest.mark.asyncio
+async def test_get_installed_standards_as_model(
+    rest_api_client: AsyncPackagingRestApiClient, test_server: PackagingApiTestServer
+):
+    async def get_installed_standards(req: web.Request):
+        return web.json_response(standards)
+
+    standards = [
+        {
+            "StandardName": "cloudshell_firewall_standard",
+            "Versions": ["3.0.0", "3.0.1", "3.0.2"],
+        },
+        {
+            "StandardName": "cloudshell_networking_standard",
+            "Versions": ["5.0.0", "5.0.1", "5.0.2", "5.0.3", "5.0.4"],
+        },
+    ]
+    test_server.app.router.add_route("get", "/API/Standards", get_installed_standards)
+    async with test_server.start_server():
+        models = await rest_api_client.get_installed_standards_as_models()
+
+    for i in range(2):
+        assert models[i].standard_name == standards[i]["StandardName"]
+        assert models[i].versions == standards[i]["Versions"]
+
+    m = models[0]
+    assert str(
+        m
+    ) == "<StandardInfo Name:{0.standard_name}, Versions:{0.versions}>".format(m)
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("status_code", "text_msg", "expected_err_class", "expected_err_text"),
     (
@@ -315,6 +346,68 @@ async def test_get_shell(
     }
     async with test_server.start_server():
         assert await rest_api_client.get_shell(shell_name) == shell_info
+
+    assert received_data["name"] == shell_name
+
+
+@pytest.mark.asyncio
+async def test_get_shell_as_model(
+    rest_api_client: AsyncPackagingRestApiClient, test_server: PackagingApiTestServer
+):
+    async def get_shell(req: web.Request):
+        received_data["name"] = req.match_info.get("name")
+        return web.json_response(shell_info)
+
+    received_data = {}
+    test_server.app.router.add_route("get", "/API/Shells/{name}", get_shell)
+    shell_name = "shell_name"
+    shell_info = {
+        "Id": "5889f189-ecdd-404a-b6ff-b3d1e01a4cf3",
+        "Name": shell_name,
+        "Version": "2.0.1",
+        "StandardType": "Networking",
+        "ModificationDate": "2020-03-02T15:42:47",
+        "LastModifiedByUser": {"Username": "admin", "Email": None},
+        "Author": "Quali",
+        "IsOfficial": True,
+        "BasedOn": "",
+        "ExecutionEnvironmentType": {"Position": 0, "Path": "2.7.10"},
+    }
+    async with test_server.start_server():
+        model = await rest_api_client.get_shell_as_model(shell_name)
+    assert model.id_ == shell_info["Id"]
+    assert model.name == shell_info["Name"]
+    assert model.version == shell_info["Version"]
+    assert model.standard_type == shell_info["StandardType"]
+    assert model.modification_date == shell_info["ModificationDate"]
+    assert (
+        model.last_modified_by_user.user_name
+        == shell_info["LastModifiedByUser"]["Username"]
+    )
+    assert (
+        model.last_modified_by_user.email == shell_info["LastModifiedByUser"]["Email"]
+    )
+    assert model.author == shell_info["Author"]
+    assert model.is_official == shell_info["IsOfficial"]
+    assert model.based_on == shell_info["BasedOn"]
+    assert (
+        model.execution_environment_type.position
+        == shell_info["ExecutionEnvironmentType"]["Position"]
+    )
+    assert (
+        model.execution_environment_type.path
+        == shell_info["ExecutionEnvironmentType"]["Path"]
+    )
+    assert str(model) == "<ShellInfo Name:{0.name}, Version: {0.version}>".format(model)
+    assert str(
+        model.last_modified_by_user
+    ) == "<UserInfo Username:{0.user_name}, Email:{0.email}>".format(
+        model.last_modified_by_user
+    )
+    assert str(model.execution_environment_type) == (
+        "<ExecutionEnvironmentType Position:{0.position}, "
+        "Path:{0.path}>".format(model.execution_environment_type)
+    )
 
     assert received_data["name"] == shell_name
 
