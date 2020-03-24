@@ -13,22 +13,15 @@ from async_property import async_cached_property
 
 from cloudshell.rest.exceptions import (
     FeatureUnavailable,
+    LoginFailedError,
     PackagingRestApiError,
     ShellNotFoundException,
 )
 
 
 class AsyncPackagingRestApiClient:
-    DEFAULT_DOMAIN = "Global"
-    DEFAULT_PORT = 9000
-
     def __init__(
-        self,
-        host: str,
-        username: str,
-        password: str,
-        domain: str = DEFAULT_DOMAIN,
-        port: int = DEFAULT_PORT,
+        self, host: str, port: int, username: str, password: str, domain: str,
     ):
         self._host = host
         self._port = port
@@ -50,6 +43,12 @@ class AsyncPackagingRestApiClient:
         }
         async with aiohttp.ClientSession() as session:
             async with session.put(url, data=req_data) as resp:
+                if resp.status == 401:
+                    raise LoginFailedError(
+                        resp.url, resp.status, await resp.text(), resp.headers, None
+                    )
+                if resp.status != 200:
+                    raise PackagingRestApiError(await resp.text())
                 token = await resp.text()
         return token.strip("'\"")
 
@@ -100,6 +99,8 @@ class AsyncPackagingRestApiClient:
                     raise FeatureUnavailable()
                 elif resp.status == 400:
                     raise ShellNotFoundException()
+                elif resp.status != 200:
+                    raise PackagingRestApiError(await resp.text())
                 return await resp.json()
 
     async def delete_shell(self, shell_name: str):
