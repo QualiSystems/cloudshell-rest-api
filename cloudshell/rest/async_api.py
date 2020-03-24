@@ -17,6 +17,7 @@ from cloudshell.rest.exceptions import (
     PackagingRestApiError,
     ShellNotFoundException,
 )
+from cloudshell.rest.models import ShellInfo, StandardInfo
 
 
 class AsyncPackagingRestApiClient:
@@ -103,6 +104,9 @@ class AsyncPackagingRestApiClient:
                     raise PackagingRestApiError(await resp.text())
                 return await resp.json()
 
+    async def get_shell_as_model(self, shell_name: str) -> ShellInfo:
+        return ShellInfo(await self.get_shell(shell_name))
+
     async def delete_shell(self, shell_name: str):
         url = urljoin(self._api_url, f"Shells/{shell_name}")
         async with await self._get_session() as session:
@@ -123,6 +127,9 @@ class AsyncPackagingRestApiClient:
                 elif resp.status != 200:
                     raise PackagingRestApiError(await resp.text())
                 return await resp.json()
+
+    async def get_installed_standards_as_models(self) -> List[StandardInfo]:
+        return [StandardInfo(s) for s in await self.get_installed_standards()]
 
     async def export_package(self, topologies: List[str]) -> bytes:
         url = urljoin(self._api_url, "Package/ExportPackage")

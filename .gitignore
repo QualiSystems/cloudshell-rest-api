@@ -60,4 +60,5 @@ target/
 .idea/
 
 async/
-_test.py
+_test_sync_api.py
+_test_async_api.py
