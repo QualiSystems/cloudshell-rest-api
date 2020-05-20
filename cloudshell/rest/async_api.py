@@ -1,5 +1,9 @@
+"""You need to install extra dependencies for async API client.
+
+`pip install cloudshell-rest-api[async]`
+"""
 from pathlib import Path
-from typing import Union, BinaryIO, List, Optional
+from typing import BinaryIO, List, Optional, Union
 from urllib.parse import urljoin
 
 import aiofiles
@@ -9,22 +13,16 @@ from async_property import async_cached_property
 
 from cloudshell.rest.exceptions import (
     FeatureUnavailable,
+    LoginFailedError,
     PackagingRestApiError,
     ShellNotFoundException,
 )
+from cloudshell.rest.models import ShellInfo, StandardInfo
 
 
 class AsyncPackagingRestApiClient:
-    DEFAULT_DOMAIN = "Global"
-    DEFAULT_PORT = 9000
-
     def __init__(
-        self,
-        host: str,
-        username: str,
-        password: str,
-        domain: str = DEFAULT_DOMAIN,
-        port: int = DEFAULT_PORT,
+        self, host: str, port: int, username: str, password: str, domain: str,
     ):
         self._host = host
         self._port = port
@@ -46,6 +44,12 @@ class AsyncPackagingRestApiClient:
         }
         async with aiohttp.ClientSession() as session:
             async with session.put(url, data=req_data) as resp:
+                if resp.status == 401:
+                    raise LoginFailedError(
+                        resp.url, resp.status, await resp.text(), resp.headers, None
+                    )
+                if resp.status != 200:
+                    raise PackagingRestApiError(await resp.text())
                 token = await resp.text()
         return token.strip("'\"")
 
@@ -96,7 +100,12 @@ class AsyncPackagingRestApiClient:
                     raise FeatureUnavailable()
                 elif resp.status == 400:
                     raise ShellNotFoundException()
+                elif resp.status != 200:
+                    raise PackagingRestApiError(await resp.text())
                 return await resp.json()
+
+    async def get_shell_as_model(self, shell_name: str) -> ShellInfo:
+        return ShellInfo(await self.get_shell(shell_name))
 
     async def delete_shell(self, shell_name: str):
         url = urljoin(self._api_url, f"Shells/{shell_name}")
@@ -118,6 +127,9 @@ class AsyncPackagingRestApiClient:
                 elif resp.status != 200:
                     raise PackagingRestApiError(await resp.text())
                 return await resp.json()
+
+    async def get_installed_standards_as_models(self) -> List[StandardInfo]:
+        return [StandardInfo(s) for s in await self.get_installed_standards()]
 
     async def export_package(self, topologies: List[str]) -> bytes:
         url = urljoin(self._api_url, "Package/ExportPackage")
@@ -145,7 +157,6 @@ class AsyncPackagingRestApiClient:
                     raise FeatureUnavailable()
                 elif resp.status != 200:
                     raise PackagingRestApiError(await resp.text())
-                await resp.json()
 
     async def import_package(self, package_path: Union[Path, str]):
         async with aiofiles.open(package_path, "rb") as f:

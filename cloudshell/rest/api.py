@@ -1,21 +1,27 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-
 import os
-import json
-try:
-    import urllib2
-except:
-    import urllib.request as urllib2
-from requests import delete, get, post, put
+import warnings
 
-from cloudshell.rest.exceptions import ShellNotFoundException, FeatureUnavailable
+import requests
+from cached_property import cached_property
+
+from cloudshell.rest.exceptions import (
+    FeatureUnavailable,
+    LoginFailedError,
+    PackagingRestApiError,
+    ShellNotFoundException,
+)
+from cloudshell.rest.models import ShellInfo, StandardInfo
+
+try:
+    from urlparse import urljoin
+except ImportError:
+    from urllib.parse import urljoin
 
 
 class PackagingRestApiClient(object):
     def __init__(self, ip, port, username, password, domain):
-        """
-        Logs into CloudShell using REST API
+        """Initialize REST API handler.
+
         :param ip: CloudShell server IP or host name
         :param port: port, usually 9000
         :param username: CloudShell username
@@ -24,213 +30,192 @@ class PackagingRestApiClient(object):
         """
         self.ip = ip
         self.port = port
-        opener = urllib2.build_opener(urllib2.HTTPHandler)
-        url = "http://{0}:{1}/API/Auth/Login".format(ip, port)
-        data = "username={0}&password={1}&domain={2}" \
-            .format(username, PackagingRestApiClient._urlencode(password), domain).encode()
-        request = urllib2.Request(url=url, data=data)
-        request.add_header("Content-Type", "application/x-www-form-urlencoded")
-        backup = request.get_method
-        request.get_method = lambda: "PUT"
-        url = opener.open(request)
-        self.token = url.read()
-        if isinstance(self.token, bytes):
-            self.token = self.token.decode()
+        self._api_url = "http://{ip}:{port}/API/".format(**locals())
+        self._username = username
+        self._password = password
+        self._domain = domain
 
-        self.token = self.token.strip("\"")
-        request.get_method = backup
+    @cached_property
+    def _token(self):
+        return self._get_token()
+
+    @property
+    def _headers(self):
+        return {"Authorization": "Basic {}".format(self._token)}
+
+    def _get_token(self):
+        url = urljoin(self._api_url, "Auth/Login")
+        req_data = {
+            "username": self._username,
+            "password": self._password,
+            "domain": self._domain,
+        }
+        resp = requests.put(url, data=req_data)
+        if resp.status_code == 401:
+            raise LoginFailedError(
+                resp.url, resp.status_code, resp.text, resp.headers, None
+            )
+        elif resp.status_code != 200:
+            raise PackagingRestApiError(resp.text)
+        token = resp.text
+        return token.strip("'\"")
+
+    def add_shell_from_buffer(self, file_obj):
+        """Add a new Shell from the buffer or binary.
+
+        :type file_obj: io.BinaryIO|bytes
+        """
+        url = urljoin(self._api_url, "Shells")
+        req_data = {"file": file_obj}
+        resp = requests.post(url, files=req_data, headers=self._headers)
+        if resp.status_code != 201:
+            msg = "Can't add shell, response: {}".format(resp.text)
+            raise PackagingRestApiError(msg)
 
     def add_shell(self, shell_path):
-        """
-        Adds a new Shell Entity to CloudShell
-        If the shell exists, exception will be thrown
-        :param shell_path:
-        :return:
-        """
-        url = "http://{0}:{1}/API/Shells".format(self.ip, self.port)
-        response = post(url,
-                        files={os.path.basename(shell_path): open(shell_path, "rb")},
-                        headers={"Authorization": "Basic " + self.token})
+        """Adds a new Shell Entity to CloudShell.
 
-        if response.status_code != 201:
-            raise Exception(response.text)
+        If the shell exists, exception will be thrown
+        :type shell_path: str
+        """
+        with open(shell_path, "rb") as f:
+            self.add_shell_from_buffer(f)
+
+    def update_shell_from_buffer(self, file_obj, shell_name):
+        """Updates an existing Shell from the buffer or binary.
+
+        :type file_obj: io.BinaryIO|bytes
+        :type shell_name: str
+        """
+        url = urljoin(self._api_url, "Shells/{}".format(shell_name))
+        req_data = {"file": file_obj}
+        resp = requests.put(url, files=req_data, headers=self._headers)
+        if resp.status_code == 404:
+            raise ShellNotFoundException()
+        elif resp.status_code != 200:
+            msg = "Can't update shell, response: {}".format(resp.text)
+            raise PackagingRestApiError(msg)
 
     def update_shell(self, shell_path, shell_name=None):
-        """
-        Updates an existing Shell Entity in CloudShell
-        :param shell_path: The path to the shell file
-        :param shell_name: The shell name. if not supplied the shell name is derived from the shell path
-        :return:
-        """
-        filename = os.path.basename(shell_path)
-        shell_name = shell_name or self._get_shell_name_from_filename(filename)
-        url = "http://{0}:{1}/API/Shells/{2}".format(self.ip, self.port, shell_name)
-        response = put(url,
-                       files={filename: open(shell_path, "rb")},
-                       headers={"Authorization": "Basic " + self.token})
+        """Updates an existing Shell Entity in CloudShell.
 
-        if response.status_code == 404:  # Not Found
-            raise ShellNotFoundException()
-
-        if response.status_code != 200:  # Ok
-            raise Exception(response.text)
+        :type shell_path: str
+        :type shell_name: str
+        """
+        shell_name = shell_name or os.path.basename(shell_path).rsplit(".", 1)[0]
+        with open(shell_path, "rb") as f:
+            self.update_shell_from_buffer(f, shell_name)
 
     def get_installed_standards(self):
-        """
-        Gets all standards installed on CloudShell
-        :return:
-        """
-        url = "http://{0}:{1}/API/Standards".format(self.ip, self.port)
-        response = get(url,
-                       headers={"Authorization": "Basic " + self.token})
+        """Gets all standards installed on CloudShell.
 
-        if response.status_code == 404:  # Feature unavailable (probably due to cloudshell version below 8.1)
+        :rtype: list
+        """
+        url = urljoin(self._api_url, "Standards")
+        resp = requests.get(url, headers=self._headers)
+        if resp.status_code == 404:
             raise FeatureUnavailable()
+        elif resp.status_code != 200:
+            raise PackagingRestApiError(resp.text)
+        return resp.json()
 
-        if response.status_code != 200:  # Ok
-            raise Exception(response.text)
+    def get_installed_standards_as_models(self):
+        """Get all standards installed on CloudShell as models.
 
-        return response.json()
+        :rtype: list[StandardInfo]
+        """
+        return [StandardInfo(s) for s in self.get_installed_standards()]
 
     def get_shell(self, shell_name):
-        url = "http://{0}:{1}/API/Shells/{2}".format(self.ip, self.port, shell_name)
-        response = get(url,
-                       headers={"Authorization": "Basic " + self.token})
+        """Get a Shell's information.
 
-        if response.status_code == 404 or response.status_code == 405:  # Feature unavailable (probably due to cloudshell version below 8.2)
+        :type shell_name: str
+        :rtype: dict
+        """
+        url = urljoin(self._api_url, "Shells/{}".format(shell_name))
+        resp = requests.get(url, headers=self._headers)
+        if resp.status_code == 404:
             raise FeatureUnavailable()
-
-        if response.status_code == 400:  # means shell not found
+        elif resp.status_code == 400:
             raise ShellNotFoundException()
+        elif resp.status_code != 200:
+            raise PackagingRestApiError(resp.text)
+        return resp.json()
 
-        if response.status_code != 200:
-            raise Exception(response.text)
+    def get_shell_as_model(self, shell_name):
+        """Get a Shell's information as model.
 
-        return response.json()
+        :type shell_name: str
+        :rtype: ShellInfo
+        """
+        return ShellInfo(self.get_shell(shell_name))
 
     def delete_shell(self, shell_name):
-        url = "http://{0}:{1}/API/Shells/{2}".format(self.ip, self.port, shell_name)
-        response = delete(url,
-                          headers={"Authorization": "Basic " + self.token})
-
-        if response.status_code == 404 or response.status_code == 405:  # Feature unavailable (probably due to cloudshell version below 9.2)
+        """Delete a Shell from the CloudShell."""
+        url = urljoin(self._api_url, "Shells/{}".format(shell_name))
+        resp = requests.delete(url, headers=self._headers)
+        if resp.status_code == 404:
             raise FeatureUnavailable()
-
-        if response.status_code == 400:  # means shell not found
+        elif resp.status_code == 400:
             raise ShellNotFoundException()
-
-        if response.status_code != 200:
-            raise Exception(response.text)
+        elif resp.status_code != 200:
+            raise PackagingRestApiError(resp.text)
 
     def export_package(self, topologies):
-        """Export a package with the topologies from the CloudShell
+        """Export a package with the topologies from the CloudShell.
 
         :type topologies: list[str]
-        :rtype: str
+        :rtype: bytes
         :return: package content
         """
-        url = "http://{0.ip}:{0.port}/API/Package/ExportPackage".format(self)
-        response = post(
-            url,
-            headers={"Authorization": "Basic " + self.token,
-                     "Content-type": "application/json"},
-            json={"TopologyNames": topologies},
-        )
-
-        if response.status_code in (404, 405):
+        url = urljoin(self._api_url, "Package/ExportPackage")
+        req_data = {"TopologyNames": topologies}
+        resp = requests.post(url, headers=self._headers, json=req_data)
+        if resp.status_code == 404:
             raise FeatureUnavailable()
+        elif resp.status_code != 200:
+            raise PackagingRestApiError(resp.text)
+        return resp.content
 
-        if not response.ok:
-            raise Exception(response.text)
+    def export_package_to_file(self, topologies, file_path):
+        """Export a package with the topologies and save it to the file.
 
-        return response.content
+        :type topologies: list[str]
+        :type file_path: str
+        """
+        with open(file_path, "wb") as f:
+            f.write(self.export_package(topologies))
+
+    def import_package_from_buffer(self, file_obj):
+        """Import the package from buffer to the CloudShell.
+
+        :type file_obj: io.BinaryIO|bytes
+        """
+        url = urljoin(self._api_url, "Package/ImportPackage")
+        req_data = {"file": file_obj}
+        resp = requests.post(url, headers=self._headers, files=req_data)
+        if resp.status_code == 404:
+            raise FeatureUnavailable()
+        elif resp.status_code != 200:
+            raise PackagingRestApiError(resp.text)
 
     def import_package(self, package_path):
-        """Import the package to the CloudShell
+        """Import the package from the file to the CloudShell.
 
         :type package_path: str
         """
-        url = "http://{0.ip}:{0.port}/API/Package/ImportPackage".format(self)
-
-        with open(package_path, "rb") as fo:
-            response = post(
-                url,
-                headers={"Authorization": "Basic " + self.token},
-                files={"file": fo},
-            )
-
-        if response.status_code in (404, 405):
-            raise FeatureUnavailable()
-
-        if not response.ok:
-            raise Exception(response.text)
-
-        if not response.json().get("Success"):
-            error_msg = response.json().get("ErrorMessage", "Problem with importing the package")
-            raise Exception(error_msg)
-
-    @staticmethod
-    def _urlencode(s):
-        return s.replace("+", "%2B").replace("/", "%2F").replace("=", "%3D")
-
-    @staticmethod
-    def _get_shell_name_from_filename(filename):
-        return os.path.splitext(filename)[0]
-
-    def upload_environment_zip_file(self, zipfilename):
-        with open(zipfilename, "rb") as g:
-            zipdata = g.read()
-            self.upload_environment_zip_data(zipdata)
+        with open(package_path, "rb") as f:
+            self.import_package_from_buffer(f)
 
     def upload_environment_zip_data(self, zipdata):
+        warnings.warn(
+            "This method is deprecated, use import_package_from_buffer instead",
+            DeprecationWarning,
+        )
+        self.import_package_from_buffer(zipdata)
 
-        boundary = b'''------------------------652c70c071862fc2'''
-
-        fd = b'''--''' + boundary + \
-             b'''\r\nContent-Disposition: form-data; name="file"; filename="my_zip.zip"''' + \
-             b'''\r\nContent-Type: application/octet-stream\r\n\r\n''' + zipdata + \
-             b'''\r\n--''' + boundary + b'''--\r\n'''
-
-        class FakeReader(object):
-            def __init__(self, k):
-                self.k = k
-                self.offset = 0
-
-            def read(self, blocksize):
-                if self.offset >= len(self.k):
-                    return None
-
-                if self.offset + blocksize >= len(self.k):
-                    rv = self.k[self.offset:]
-                    self.offset = len(self.k)
-                else:
-                    rv = self.k[self.offset:self.offset+blocksize]
-                    self.offset += blocksize
-                return rv
-
-        fdreader = FakeReader(fd)
-
-        request = urllib2.Request("http://{}:{}/API/Package/ImportPackage".format(self.ip, str(self.port)),
-                                  data=fdreader)
-        backup = request.get_method
-        request.get_method = lambda: "POST"
-        request.add_header("Authorization", "Basic " + self.token)
-        request.add_header("Content-Type", "multipart/form-data; boundary=" + boundary)
-        request.add_header("Accept", "*/*")
-        request.add_header("Content-Length", str(len(fd)))
-        request.get_method = backup
-        opener = urllib2.build_opener(urllib2.HTTPHandler)
-        url = opener.open(request)
-
-        try:
-            s = url.read()
-            if isinstance(s, bytes):
-                s = s.decode()
-            o = json.loads(s)
-            if "Success" not in o:
-                raise Exception("'Success' value not found in Quali API response: " + str(o))
-        except Exception as ue:
-            raise Exception("Error extracting Quali API zip import result: " + str(ue))
-
-        if not o["Success"]:
-            raise Exception("Error uploading Quali API zip package: "+o["ErrorMessage"])
+    def upload_environment_zip_file(self, zipfilename):
+        warnings.warn(
+            "This method is deprecated, use import_package instead", DeprecationWarning
+        )
+        self.import_package(zipfilename)

@@ -1,5 +1,4 @@
-mock
-pyfakefs
-pytest; python_version >= '3.7'
+pytest
+pytest-cov
+responses
 pytest-asyncio; python_version >= '3.7'
-pytest-cov; python_version >= '3.7'

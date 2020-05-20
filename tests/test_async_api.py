@@ -1,5 +1,6 @@
 import io
 from pathlib import Path
+from urllib.error import HTTPError
 
 import pytest
 from aiohttp import web
@@ -8,10 +9,46 @@ from aiohttp.test_utils import TestServer
 from cloudshell.rest.async_api import AsyncPackagingRestApiClient
 from cloudshell.rest.exceptions import (
     FeatureUnavailable,
+    LoginFailedError,
     PackagingRestApiError,
     ShellNotFoundException,
 )
-from pytests.conftest import PackagingApiTestServer, USERNAME, PASSWORD
+
+HOST = "localhost"
+USERNAME = "test_user"
+PASSWORD = "test_password"
+PORT = 9000
+DOMAIN = "Global"
+
+
+class PackagingApiTestServer:
+    def __init__(self, app: web.Application):
+        self.app = app
+        self.port = PORT
+
+    def start_server(self):
+        return TestServer(self.app, port=self.port)
+
+
+@pytest.fixture()
+def rest_api_client():
+    return AsyncPackagingRestApiClient(HOST, PORT, USERNAME, PASSWORD, DOMAIN)
+
+
+@pytest.fixture()
+def packaging_app_with_token():
+    async def login(req: web.Request):
+        return web.Response(text=token)
+
+    token = "token"
+    app = web.Application()
+    app.router.add_route("put", "/API/Auth/Login", login)
+    return app
+
+
+@pytest.fixture()
+def test_server(packaging_app_with_token: web.Application):
+    return PackagingApiTestServer(packaging_app_with_token)
 
 
 @pytest.mark.asyncio
@@ -25,11 +62,38 @@ async def test_login(rest_api_client: AsyncPackagingRestApiClient):
     app = web.Application()
     app.router.add_route("put", "/API/Auth/Login", login)
 
-    async with TestServer(app, port=AsyncPackagingRestApiClient.DEFAULT_PORT):
+    async with TestServer(app, port=PORT):
         assert await rest_api_client._get_token() == token
 
     expected_text = f"username={USERNAME}&password={PASSWORD}&domain=Global"
     assert received_data["text"] == expected_text
+
+
+@pytest.mark.parametrize(
+    ("status_code", "err_msg", "expected_err_class", "expected_err_text"),
+    (
+        (401, "", LoginFailedError, ""),
+        (401, "", HTTPError, ""),  # check that returns error used in shellfoundry
+        (500, "Internal server error", PackagingRestApiError, "Internal server error"),
+    ),
+)
+@pytest.mark.asyncio
+async def test_login_failed(
+    status_code,
+    err_msg,
+    expected_err_class,
+    expected_err_text,
+    rest_api_client: AsyncPackagingRestApiClient,
+):
+    async def login(req: web.Request):
+        return web.Response(text=err_msg, status=status_code)
+
+    app = web.Application()
+    app.router.add_route("put", "/API/Auth/Login", login)
+
+    async with TestServer(app, port=PORT):
+        with pytest.raises(expected_err_class, match=expected_err_text):
+            await rest_api_client._get_token()
 
 
 @pytest.mark.asyncio
@@ -52,6 +116,37 @@ async def test_get_installed_standards(
     test_server.app.router.add_route("get", "/API/Standards", get_installed_standards)
     async with test_server.start_server():
         assert await rest_api_client.get_installed_standards() == standards
+
+
+@pytest.mark.asyncio
+async def test_get_installed_standards_as_model(
+    rest_api_client: AsyncPackagingRestApiClient, test_server: PackagingApiTestServer
+):
+    async def get_installed_standards(req: web.Request):
+        return web.json_response(standards)
+
+    standards = [
+        {
+            "StandardName": "cloudshell_firewall_standard",
+            "Versions": ["3.0.0", "3.0.1", "3.0.2"],
+        },
+        {
+            "StandardName": "cloudshell_networking_standard",
+            "Versions": ["5.0.0", "5.0.1", "5.0.2", "5.0.3", "5.0.4"],
+        },
+    ]
+    test_server.app.router.add_route("get", "/API/Standards", get_installed_standards)
+    async with test_server.start_server():
+        models = await rest_api_client.get_installed_standards_as_models()
+
+    for i in range(2):
+        assert models[i].standard_name == standards[i]["StandardName"]
+        assert models[i].versions == standards[i]["Versions"]
+
+    m = models[0]
+    assert str(
+        m
+    ) == "<StandardInfo Name:{0.standard_name}, Versions:{0.versions}>".format(m)
 
 
 @pytest.mark.asyncio
@@ -256,22 +351,90 @@ async def test_get_shell(
 
 
 @pytest.mark.asyncio
+async def test_get_shell_as_model(
+    rest_api_client: AsyncPackagingRestApiClient, test_server: PackagingApiTestServer
+):
+    async def get_shell(req: web.Request):
+        received_data["name"] = req.match_info.get("name")
+        return web.json_response(shell_info)
+
+    received_data = {}
+    test_server.app.router.add_route("get", "/API/Shells/{name}", get_shell)
+    shell_name = "shell_name"
+    shell_info = {
+        "Id": "5889f189-ecdd-404a-b6ff-b3d1e01a4cf3",
+        "Name": shell_name,
+        "Version": "2.0.1",
+        "StandardType": "Networking",
+        "ModificationDate": "2020-03-02T15:42:47",
+        "LastModifiedByUser": {"Username": "admin", "Email": None},
+        "Author": "Quali",
+        "IsOfficial": True,
+        "BasedOn": "",
+        "ExecutionEnvironmentType": {"Position": 0, "Path": "2.7.10"},
+    }
+    async with test_server.start_server():
+        model = await rest_api_client.get_shell_as_model(shell_name)
+    assert model.id_ == shell_info["Id"]
+    assert model.name == shell_info["Name"]
+    assert model.version == shell_info["Version"]
+    assert model.standard_type == shell_info["StandardType"]
+    assert model.modification_date == shell_info["ModificationDate"]
+    assert (
+        model.last_modified_by_user.user_name
+        == shell_info["LastModifiedByUser"]["Username"]
+    )
+    assert (
+        model.last_modified_by_user.email == shell_info["LastModifiedByUser"]["Email"]
+    )
+    assert model.author == shell_info["Author"]
+    assert model.is_official == shell_info["IsOfficial"]
+    assert model.based_on == shell_info["BasedOn"]
+    assert (
+        model.execution_environment_type.position
+        == shell_info["ExecutionEnvironmentType"]["Position"]
+    )
+    assert (
+        model.execution_environment_type.path
+        == shell_info["ExecutionEnvironmentType"]["Path"]
+    )
+    assert str(model) == "<ShellInfo Name:{0.name}, Version: {0.version}>".format(model)
+    assert str(
+        model.last_modified_by_user
+    ) == "<UserInfo Username:{0.user_name}, Email:{0.email}>".format(
+        model.last_modified_by_user
+    )
+    assert str(model.execution_environment_type) == (
+        "<ExecutionEnvironmentType Position:{0.position}, "
+        "Path:{0.path}>".format(model.execution_environment_type)
+    )
+
+    assert received_data["name"] == shell_name
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
-    ("status_code", "expected_err_class"),
-    ((404, FeatureUnavailable), (400, ShellNotFoundException)),
+    ("status_code", "err_msg", "expected_err_class", "expected_err_text"),
+    (
+        (404, "", FeatureUnavailable, ""),
+        (400, "", ShellNotFoundException, ""),
+        (500, "Internal server error", PackagingRestApiError, "Internal server error"),
+    ),
 )
 async def test_get_shell_fails(
     status_code,
+    err_msg,
     expected_err_class,
+    expected_err_text,
     rest_api_client: AsyncPackagingRestApiClient,
     test_server: PackagingApiTestServer,
 ):
     async def get_shell(req: web.Request):
-        return web.Response(status=status_code)
+        return web.Response(status=status_code, text=err_msg)
 
     test_server.app.router.add_route("get", "/API/Shells/{name}", get_shell)
     async with test_server.start_server():
-        with pytest.raises(expected_err_class):
+        with pytest.raises(expected_err_class, match=expected_err_text):
             await rest_api_client.get_shell("shell_name")
 
 
