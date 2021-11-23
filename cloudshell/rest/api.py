@@ -13,21 +13,29 @@ from cloudshell.rest.exceptions import ShellNotFoundException, FeatureUnavailabl
 
 
 class PackagingRestApiClient(object):
-    def __init__(self, ip, port, username, password, domain):
+    def __init__(self, ip, port=9000, username="", password="", domain="Global", token=""):
         """
         Logs into CloudShell using REST API
-        :param ip: CloudShell server IP or host name
-        :param port: port, usually 9000
-        :param username: CloudShell username
-        :param password: CloudShell password
+        pass either username / password OR admin token from server
+        :param str ip: CloudShell server IP or host name
+        :param int port: api port, usually 9000
+        :param str username: CloudShell username
+        :param str password: CloudShell password
         :param domain: CloudShell domain, usually Global
+        :param str token: optionally pass in token from server to skip login
         """
         self.ip = ip
         self.port = port
         opener = urllib2.build_opener(urllib2.HTTPHandler)
         url = "http://{0}:{1}/API/Auth/Login".format(ip, port)
-        data = "username={0}&password={1}&domain={2}" \
-            .format(username, PackagingRestApiClient._urlencode(password), domain).encode()
+        if username and password:
+            data = "username={0}&password={1}&domain={2}" \
+                .format(username, PackagingRestApiClient._urlencode(password), domain).encode()
+        elif token:
+            data = "token={0}&domain={1}" \
+                .format(token, domain).encode()
+        else:
+            raise ValueError("Either user/password or token must be passed")
         request = urllib2.Request(url=url, data=data)
         request.add_header("Content-Type", "application/x-www-form-urlencoded")
         backup = request.get_method
