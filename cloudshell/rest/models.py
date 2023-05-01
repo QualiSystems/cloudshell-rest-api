@@ -1,4 +1,4 @@
-class UserInfo(object):
+class UserInfo:
     """User info model.
 
     :type user_name: str
@@ -13,7 +13,7 @@ class UserInfo(object):
         return "<UserInfo Username:{0.user_name}, Email:{0.email}>".format(self)
 
 
-class ExecutionEnvironmentType(object):
+class ExecutionEnvironmentType:
     """Execution environment type model.
 
     :type position: int
@@ -31,7 +31,7 @@ class ExecutionEnvironmentType(object):
         )
 
 
-class ShellInfo(object):
+class ShellInfo:
     """Shell info model.
 
     :type id_: str
@@ -64,7 +64,7 @@ class ShellInfo(object):
         return "<ShellInfo Name:{0.name}, Version: {0.version}>".format(self)
 
 
-class StandardInfo(object):
+class StandardInfo:
     """Standard Info model.
 
     :type standard_name: str
