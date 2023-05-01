@@ -32,12 +32,6 @@ Install cloudshell-rest-api Python package from PyPI::
 
     pip install cloudshell-rest-api
 
-
-Install with dependencies for async API client::
-
-    pip install cloudshell-resp-api[async]
-
-
 Getting started
 ---------------
 
