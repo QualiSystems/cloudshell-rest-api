@@ -104,7 +104,7 @@ class PackagingRestApiClient:
 
     def get_installed_standards_as_models(self) -> list[StandardInfo]:
         """Get all standards installed on CloudShell as models."""
-        return [StandardInfo(s) for s in self.get_installed_standards()]
+        return [StandardInfo.from_dict(s) for s in self.get_installed_standards()]
 
     def get_shell(self, shell_name: str) -> dict:
         """Get a Shell's information."""
@@ -120,7 +120,7 @@ class PackagingRestApiClient:
 
     def get_shell_as_model(self, shell_name: str) -> ShellInfo:
         """Get a Shell's information as model."""
-        return ShellInfo(self.get_shell(shell_name))
+        return ShellInfo.from_dict(self.get_shell(shell_name))
 
     def delete_shell(self, shell_name: str) -> None:
         """Delete a Shell from the CloudShell."""
