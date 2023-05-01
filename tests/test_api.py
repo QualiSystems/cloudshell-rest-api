@@ -349,7 +349,7 @@ def test_get_shell_as_model(rest_api_client, mocked_responses):
     mocked_responses.add(responses.GET, url, json=shell_info)
 
     model = rest_api_client.get_shell_as_model(shell_name)
-    assert model.id_ == shell_info["Id"]
+    assert model.id == shell_info["Id"]
     assert model.name == shell_info["Name"]
     assert model.version == shell_info["Version"]
     assert model.standard_type == shell_info["StandardType"]
