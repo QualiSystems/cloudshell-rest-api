@@ -7,7 +7,8 @@ from typing.io import BinaryIO
 from urllib.parse import urljoin
 
 import requests
-from cached_property import cached_property
+from attrs import define, field
+from typing_extensions import Self
 
 from cloudshell.rest.exceptions import (
     FeatureUnavailable,
@@ -18,47 +19,40 @@ from cloudshell.rest.exceptions import (
 from cloudshell.rest.models import ShellInfo, StandardInfo
 
 
+@define
 class PackagingRestApiClient:
-    def __init__(self, ip: str, port: int, username: str, password: str, domain: str):
-        """Initialize REST API handler.
+    host: str
+    _token: str = field(repr=False)
+    port: int = 9000
+    _api_url: str = field(init=False)
+    _headers: dict[str, str] = field(init=False)
 
-        :param ip: CloudShell server IP or host name
-        :param port: port, usually 9000
-        :param username: CloudShell username
-        :param password: CloudShell password
-        :param domain: CloudShell domain, usually Global
-        """
-        self.ip = ip
-        self.port = port
-        self._api_url = f"http://{ip}:{port}/API/"
-        self._username = username
-        self._password = password
-        self._domain = domain
+    def __attrs_post_init__(self):
+        self._api_url = _get_api_url(self.host, self.port)
+        self._headers = {"Authorization": f"Basic {self._token}"}
 
-    @cached_property
-    def _token(self) -> str:
-        return self._get_token()
-
-    @property
-    def _headers(self) -> dict[str, str]:
-        return {"Authorization": f"Basic {self._token}"}
-
-    def _get_token(self) -> str:
-        url = urljoin(self._api_url, "Auth/Login")
+    @classmethod
+    def login(
+        cls,
+        host: str,
+        username: str,
+        password: str,
+        domain: str = "Global",
+        port: int = 9000,
+    ) -> Self:
+        url = urljoin(_get_api_url(host, port), "Auth/Login")
         req_data = {
-            "username": self._username,
-            "password": self._password,
-            "domain": self._domain,
+            "username": username,
+            "password": password,
+            "domain": domain,
         }
         resp = requests.put(url, data=req_data)
         if resp.status_code == 401:
-            raise LoginFailedError(
-                resp.url, resp.status_code, resp.text, resp.headers, None
-            )
+            raise LoginFailedError(resp.text)
         elif resp.status_code != 200:
             raise PackagingRestApiError(resp.text)
-        token = resp.text
-        return token.strip("'\"")
+        token = resp.text.strip("'\"")
+        return cls(host, token, port)
 
     def add_shell_from_buffer(self, file_obj: BinaryIO | bytes) -> None:
         """Add a new Shell from the buffer or binary."""
@@ -184,3 +178,7 @@ class PackagingRestApiClient:
             "This method is deprecated, use import_package instead", DeprecationWarning
         )
         self.import_package(zipfilename)
+
+
+def _get_api_url(host: str, port: int) -> str:
+    return f"http://{host}:{port}/API/"
