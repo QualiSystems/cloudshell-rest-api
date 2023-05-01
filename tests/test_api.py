@@ -101,9 +101,11 @@ def test_get_installed_standards_as_models(rest_api_client):
         assert models[i].standard_name == standards[i]["StandardName"]
         assert models[i].versions == standards[i]["Versions"]
     m = models[0]
-    assert str(
-        m
-    ) == "<StandardInfo Name:{0.standard_name}, Versions:{0.versions}>".format(m)
+    expected_repr = (
+        "StandardInfo(standard_name='cloudshell_firewall_standard', "
+        "versions=['3.0.0', '3.0.1', '3.0.2'])"
+    )
+    assert str(m) == expected_repr
 
 
 @pytest.mark.parametrize(
@@ -295,6 +297,11 @@ def test_get_shell_as_model(rest_api_client):
         "BasedOn": "",
         "ExecutionEnvironmentType": {"Position": 0, "Path": "2.7.10"},
     }
+    expected_user_repr = "UserInfo(user_name='admin', email=None)"
+    expected_exec_env_repr = "ExecutionEnvironmentType(position=0, path='2.7.10')"
+    expected_shell_repr = (
+        "ShellInfo(name='shell_name', version='2.0.1', is_official=True)"
+    )
 
     with responses.RequestsMock() as rsps:
         rsps.add(responses.GET, url, json=shell_info)
@@ -324,16 +331,9 @@ def test_get_shell_as_model(rest_api_client):
         model.execution_environment_type.path
         == shell_info["ExecutionEnvironmentType"]["Path"]
     )
-    assert str(model) == "<ShellInfo Name:{0.name}, Version: {0.version}>".format(model)
-    assert str(
-        model.last_modified_by_user
-    ) == "<UserInfo Username:{0.user_name}, Email:{0.email}>".format(
-        model.last_modified_by_user
-    )
-    assert str(model.execution_environment_type) == (
-        "<ExecutionEnvironmentType Position:{0.position}, "
-        "Path:{0.path}>".format(model.execution_environment_type)
-    )
+    assert str(model) == expected_shell_repr
+    assert str(model.last_modified_by_user) == expected_user_repr
+    assert str(model.execution_environment_type) == expected_exec_env_repr
 
 
 @pytest.mark.parametrize(
