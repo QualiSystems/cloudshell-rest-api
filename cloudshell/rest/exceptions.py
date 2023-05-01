@@ -1,6 +1,3 @@
-from urllib.error import HTTPError
-
-
 class PackagingRestApiError(Exception):
     """Base packaging REST API Error."""
 
@@ -13,5 +10,5 @@ class FeatureUnavailable(PackagingRestApiError):
     pass
 
 
-class LoginFailedError(PackagingRestApiError, HTTPError):
+class LoginFailedError(PackagingRestApiError):
     pass
