@@ -1,6 +1,8 @@
 import io
 import json
 import re
+from urllib.error import HTTPError
+from urllib.parse import parse_qs, urljoin
 
 import pytest
 import responses
@@ -13,21 +15,13 @@ from cloudshell.rest.exceptions import (
     ShellNotFoundException,
 )
 
-try:
-    from urlparse import urljoin, parse_qs
-    from urllib2 import HTTPError
-except ImportError:
-    from urllib.parse import urljoin, parse_qs
-    from urllib.error import HTTPError
-
-
 HOST = "host"
 PORT = 9000
 USERNAME = "username"
 PASSWORD = "password"
 DOMAIN = "Global"
 TOKEN = "token"
-API_URL = "http://{HOST}:{PORT}/API/".format(**locals())
+API_URL = f"http://{HOST}:{PORT}/API/"
 
 
 @pytest.fixture
@@ -190,7 +184,7 @@ def test_add_shell_from_buffer_fails(rest_api_client, mocked_responses):
     url = urljoin(API_URL, "Shells")
     err_msg = "Internal server error"
     mocked_responses.add(responses.POST, url, status=500, body=err_msg)
-    expected_err = "Can't add shell, response: {err_msg}".format(**locals())
+    expected_err = f"Can't add shell, response: {err_msg}"
 
     with pytest.raises(PackagingRestApiError, match=expected_err):
         rest_api_client.add_shell_from_buffer(b"")
@@ -207,9 +201,9 @@ def test_add_shell(rest_api_client, mocked_responses, tmp_path):
     mocked_responses.add(responses.POST, url, status=201)
 
     file_content = b"test buffer"
-    buffer = io.BytesIO(file_content)
+    _ = io.BytesIO(file_content)
     shell_name = "shell_name"
-    file_name = "{shell_name}.zip".format(**locals())
+    file_name = f"{shell_name}.zip"
     file_content = b"test buffer"
     shell_path = tmp_path / file_name
     shell_path.write_bytes(file_content)
@@ -231,7 +225,7 @@ def test_update_shell_from_buffer(rest_api_client, mocked_responses):
     :type mocked_responses: responses.RequestsMock
     """
     shell_name = "shell_name"
-    url = urljoin(API_URL, "Shells/{shell_name}".format(**locals()))
+    url = urljoin(API_URL, f"Shells/{shell_name}")
     mocked_responses.add(responses.PUT, url)
 
     file_content = b"test buffer"
@@ -272,7 +266,7 @@ def test_update_shell_from_buffer_fails(
     :type mocked_responses: responses.RequestsMock
     """
     shell_name = "shell_name"
-    url = urljoin(API_URL, "Shells/{shell_name}".format(**locals()))
+    url = urljoin(API_URL, f"Shells/{shell_name}")
     mocked_responses.add(responses.PUT, url, status=status_code, body=err_msg)
 
     with pytest.raises(expected_err_class, match=expected_err_text):
@@ -287,12 +281,12 @@ def test_update_shell(rest_api_client, mocked_responses, tmp_path):
     :type tmp_path: pathlib2.Path
     """
     shell_name = "shell_name"
-    url = urljoin(API_URL, "Shells/{shell_name}".format(**locals()))
+    url = urljoin(API_URL, f"Shells/{shell_name}")
     mocked_responses.add(responses.PUT, url)
 
     file_content = b"test buffer"
-    buffer = io.BytesIO(file_content)
-    file_name = "{shell_name}.zip".format(**locals())
+    _ = io.BytesIO(file_content)
+    file_name = f"{shell_name}.zip"
     file_content = b"test buffer"
     shell_path = tmp_path / file_name
     shell_path.write_bytes(file_content)
@@ -314,7 +308,7 @@ def test_get_shell(rest_api_client, mocked_responses):
     :type mocked_responses: responses.RequestsMock
     """
     shell_name = "shell_name"
-    url = urljoin(API_URL, "Shells/{shell_name}".format(**locals()))
+    url = urljoin(API_URL, f"Shells/{shell_name}")
     shell_info = {
         "Id": "5889f189-ecdd-404a-b6ff-b3d1e01a4cf3",
         "Name": shell_name,
@@ -339,7 +333,7 @@ def test_get_shell_as_model(rest_api_client, mocked_responses):
     :type mocked_responses: responses.RequestsMock
     """
     shell_name = "shell_name"
-    url = urljoin(API_URL, "Shells/{shell_name}".format(**locals()))
+    url = urljoin(API_URL, f"Shells/{shell_name}")
     shell_info = {
         "Id": "5889f189-ecdd-404a-b6ff-b3d1e01a4cf3",
         "Name": shell_name,
@@ -412,7 +406,7 @@ def test_get_shell_fails(
     :type mocked_responses: responses.RequestsMock
     """
     shell_name = "shell_name"
-    url = urljoin(API_URL, "Shells/{shell_name}".format(**locals()))
+    url = urljoin(API_URL, f"Shells/{shell_name}")
     mocked_responses.add(responses.GET, url, status=status_code)
 
     with pytest.raises(expected_err_class):
@@ -426,7 +420,7 @@ def test_delete_shell(rest_api_client, mocked_responses):
     :type mocked_responses: responses.RequestsMock
     """
     shell_name = "shell_name"
-    url = urljoin(API_URL, "Shells/{shell_name}".format(**locals()))
+    url = urljoin(API_URL, f"Shells/{shell_name}")
     mocked_responses.add(responses.DELETE, url)
 
     rest_api_client.delete_shell(shell_name)
@@ -454,7 +448,7 @@ def test_delete_shell_fails(
     :type mocked_responses: responses.RequestsMock
     """
     shell_name = "shell_name"
-    url = urljoin(API_URL, "Shells/{shell_name}".format(**locals()))
+    url = urljoin(API_URL, f"Shells/{shell_name}")
     mocked_responses.add(responses.DELETE, url, status=status_code, body=err_msg)
 
     with pytest.raises(expected_err_class, match=expected_err_text):

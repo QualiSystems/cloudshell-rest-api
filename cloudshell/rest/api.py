@@ -1,5 +1,6 @@
 import os
 import warnings
+from urllib.parse import urljoin
 
 import requests
 from cached_property import cached_property
@@ -12,13 +13,8 @@ from cloudshell.rest.exceptions import (
 )
 from cloudshell.rest.models import ShellInfo, StandardInfo
 
-try:
-    from urlparse import urljoin
-except ImportError:
-    from urllib.parse import urljoin
 
-
-class PackagingRestApiClient(object):
+class PackagingRestApiClient:
     def __init__(self, ip, port, username, password, domain):
         """Initialize REST API handler.
 
@@ -30,7 +26,7 @@ class PackagingRestApiClient(object):
         """
         self.ip = ip
         self.port = port
-        self._api_url = "http://{ip}:{port}/API/".format(**locals())
+        self._api_url = f"http://{ip}:{port}/API/"
         self._username = username
         self._password = password
         self._domain = domain
@@ -41,7 +37,7 @@ class PackagingRestApiClient(object):
 
     @property
     def _headers(self):
-        return {"Authorization": "Basic {}".format(self._token)}
+        return {"Authorization": f"Basic {self._token}"}
 
     def _get_token(self):
         url = urljoin(self._api_url, "Auth/Login")
@@ -69,7 +65,7 @@ class PackagingRestApiClient(object):
         req_data = {"file": file_obj}
         resp = requests.post(url, files=req_data, headers=self._headers)
         if resp.status_code != 201:
-            msg = "Can't add shell, response: {}".format(resp.text)
+            msg = f"Can't add shell, response: {resp.text}"
             raise PackagingRestApiError(msg)
 
     def add_shell(self, shell_path):
@@ -87,13 +83,13 @@ class PackagingRestApiClient(object):
         :type file_obj: io.BinaryIO|bytes
         :type shell_name: str
         """
-        url = urljoin(self._api_url, "Shells/{}".format(shell_name))
+        url = urljoin(self._api_url, f"Shells/{shell_name}")
         req_data = {"file": file_obj}
         resp = requests.put(url, files=req_data, headers=self._headers)
         if resp.status_code == 404:
             raise ShellNotFoundException()
         elif resp.status_code != 200:
-            msg = "Can't update shell, response: {}".format(resp.text)
+            msg = f"Can't update shell, response: {resp.text}"
             raise PackagingRestApiError(msg)
 
     def update_shell(self, shell_path, shell_name=None):
@@ -132,7 +128,7 @@ class PackagingRestApiClient(object):
         :type shell_name: str
         :rtype: dict
         """
-        url = urljoin(self._api_url, "Shells/{}".format(shell_name))
+        url = urljoin(self._api_url, f"Shells/{shell_name}")
         resp = requests.get(url, headers=self._headers)
         if resp.status_code == 404:
             raise FeatureUnavailable()
@@ -152,7 +148,7 @@ class PackagingRestApiClient(object):
 
     def delete_shell(self, shell_name):
         """Delete a Shell from the CloudShell."""
-        url = urljoin(self._api_url, "Shells/{}".format(shell_name))
+        url = urljoin(self._api_url, f"Shells/{shell_name}")
         resp = requests.delete(url, headers=self._headers)
         if resp.status_code == 404:
             raise FeatureUnavailable()

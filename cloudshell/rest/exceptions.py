@@ -1,7 +1,4 @@
-try:
-    from urllib2 import HTTPError
-except ImportError:
-    from urllib.error import HTTPError
+from urllib.error import HTTPError
 
 
 class PackagingRestApiError(Exception):
