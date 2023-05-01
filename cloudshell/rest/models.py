@@ -24,7 +24,7 @@ class ExecutionEnvironmentType:
 
 class ShellInfo:
     def __init__(self, info_dict):
-        self.id_: str = info_dict["Id"]
+        self.id: str = info_dict["Id"]
         self.name: str = info_dict["Name"]
         self.version: str = info_dict["Version"]
         self.standard_type: str = info_dict["StandardType"]
