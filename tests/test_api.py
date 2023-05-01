@@ -1,7 +1,6 @@
 import io
 import json
 import re
-from urllib.error import HTTPError
 from urllib.parse import parse_qs, urljoin
 
 import pytest
@@ -26,30 +25,21 @@ API_URL = f"http://{HOST}:{PORT}/API/"
 
 @pytest.fixture
 def rest_api_client():
-    return PackagingRestApiClient(HOST, 9000, USERNAME, PASSWORD, DOMAIN)
+    return PackagingRestApiClient(HOST, TOKEN)
 
 
-@pytest.fixture
-def mocked_responses():
-    token = "token"
-    url = urljoin(API_URL, "Auth/Login")
+def test_login():
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.PUT, url, body=token)
-        yield rsps
-        login_call = rsps.calls[0]
-        assert login_call.request.url == url
-        assert login_call.response.text == token
+        rsps.add(responses.PUT, urljoin(API_URL, "Auth/Login"), body=TOKEN)
 
+        api = PackagingRestApiClient.login(
+            HOST, USERNAME, PASSWORD, domain=DOMAIN, port=PORT
+        )
+        assert api._token == TOKEN
 
-def test_login(rest_api_client, mocked_responses):
-    """Test login.
+        assert len(rsps.calls) == 1
+        req = rsps.calls[0].request
 
-    :type rest_api_client: PackagingRestApiClient
-    :type mocked_responses: responses.RequestsMock
-    """
-    assert rest_api_client._get_token() == TOKEN
-    assert len(mocked_responses.calls) == 1
-    req = mocked_responses.calls[0].request
     body = "username={USERNAME}&domain={DOMAIN}&password={PASSWORD}".format(**globals())
     assert parse_qs(req.body) == parse_qs(body)
 
@@ -58,31 +48,19 @@ def test_login(rest_api_client, mocked_responses):
     ("status_code", "err_msg", "expected_err_class", "expected_err_text"),
     (
         (401, "", LoginFailedError, ""),
-        (401, "", HTTPError, ""),  # check that returns error used in shellfoundry
         (500, "Internal server error", PackagingRestApiError, "Internal server error"),
     ),
 )
-def test_login_failed(
-    status_code, err_msg, expected_err_class, expected_err_text, rest_api_client
-):
-    """Test login failed.
-
-    :type rest_api_client: PackagingRestApiClient
-    """
+def test_login_failed(status_code, err_msg, expected_err_class, expected_err_text):
     url = urljoin(API_URL, "Auth/Login")
     with responses.RequestsMock() as rsps:
         rsps.add(responses.PUT, url, body=err_msg, status=status_code)
 
         with pytest.raises(expected_err_class, match=expected_err_text):
-            rest_api_client._get_token()
+            PackagingRestApiClient.login(HOST, USERNAME, PASSWORD)
 
 
-def test_get_installed_standards(rest_api_client, mocked_responses):
-    """Test get installed standards.
-
-    :type rest_api_client: PackagingRestApiClient
-    :type mocked_responses: responses.RequestsMock
-    """
+def test_get_installed_standards(rest_api_client):
     standards = [
         {
             "StandardName": "cloudshell_firewall_standard",
@@ -94,17 +72,14 @@ def test_get_installed_standards(rest_api_client, mocked_responses):
         },
     ]
     url = urljoin(API_URL, "Standards")
-    mocked_responses.add(responses.GET, url, json=standards)
 
-    assert rest_api_client.get_installed_standards() == standards
+    with responses.RequestsMock() as rsps:
+        rsps.add(responses.GET, url, json=standards)
+
+        assert rest_api_client.get_installed_standards() == standards
 
 
-def test_get_installed_standards_as_models(rest_api_client, mocked_responses):
-    """Test get installed standards.
-
-    :type rest_api_client: PackagingRestApiClient
-    :type mocked_responses: responses.RequestsMock
-    """
+def test_get_installed_standards_as_models(rest_api_client):
     standards = [
         {
             "StandardName": "cloudshell_firewall_standard",
@@ -116,9 +91,12 @@ def test_get_installed_standards_as_models(rest_api_client, mocked_responses):
         },
     ]
     url = urljoin(API_URL, "Standards")
-    mocked_responses.add(responses.GET, url, json=standards)
 
-    models = rest_api_client.get_installed_standards_as_models()
+    with responses.RequestsMock() as rsps:
+        rsps.add(responses.GET, url, json=standards)
+
+        models = rest_api_client.get_installed_standards_as_models()
+
     for i in range(2):
         assert models[i].standard_name == standards[i]["StandardName"]
         assert models[i].versions == standards[i]["Versions"]
@@ -141,64 +119,48 @@ def test_get_installed_standards_failed(
     expected_err_class,
     expected_err_text,
     rest_api_client,
-    mocked_responses,
 ):
-    """Test get installed standards fails.
-
-    :type rest_api_client: PackagingRestApiClient
-    :type mocked_responses: responses.RequestsMock
-    """
     url = urljoin(API_URL, "Standards")
-    mocked_responses.add(responses.GET, url, status=status_code, body=text_msg)
 
-    with pytest.raises(expected_err_class, match=expected_err_text):
-        rest_api_client.get_installed_standards()
+    with responses.RequestsMock() as rsps:
+        rsps.add(responses.GET, url, status=status_code, body=text_msg)
+
+        with pytest.raises(expected_err_class, match=expected_err_text):
+            rest_api_client.get_installed_standards()
 
 
-def test_add_shell_from_buffer(rest_api_client, mocked_responses):
-    """Test add a Shell from a buffer.
-
-    :type rest_api_client: PackagingRestApiClient
-    :type mocked_responses: responses.RequestsMock
-    """
+def test_add_shell_from_buffer(rest_api_client):
     url = urljoin(API_URL, "Shells")
-    mocked_responses.add(responses.POST, url, status=201)
-
     file_content = b"test buffer"
     buffer = io.BytesIO(file_content)
-    rest_api_client.add_shell_from_buffer(buffer)
 
-    assert len(mocked_responses.calls) == 2
-    body = mocked_responses.calls[1].request.body
+    with responses.RequestsMock() as rsps:
+        rsps.add(responses.POST, url, status=201)
+
+        rest_api_client.add_shell_from_buffer(buffer)
+
+        assert len(rsps.calls) == 1
+        body = rsps.calls[0].request.body
+
     assert re.search(b"filename=[\"']file[\"']", body)
     pattern = b"\\s" + file_content + b"\\s"
     assert re.search(pattern, body)
 
 
-def test_add_shell_from_buffer_fails(rest_api_client, mocked_responses):
-    """Test add a Shell from a buffer fails.
-
-    :type rest_api_client: PackagingRestApiClient
-    :type mocked_responses: responses.RequestsMock
-    """
+def test_add_shell_from_buffer_fails(rest_api_client):
     url = urljoin(API_URL, "Shells")
     err_msg = "Internal server error"
-    mocked_responses.add(responses.POST, url, status=500, body=err_msg)
     expected_err = f"Can't add shell, response: {err_msg}"
 
-    with pytest.raises(PackagingRestApiError, match=expected_err):
-        rest_api_client.add_shell_from_buffer(b"")
+    with responses.RequestsMock() as rsps:
+        rsps.add(responses.POST, url, status=500, body=err_msg)
+
+        with pytest.raises(PackagingRestApiError, match=expected_err):
+            rest_api_client.add_shell_from_buffer(b"")
 
 
-def test_add_shell(rest_api_client, mocked_responses, tmp_path):
-    """Test add a Shell.
-
-    :type rest_api_client: PackagingRestApiClient
-    :type mocked_responses: responses.RequestsMock
-    :type tmp_path: pathlib2.Path
-    """
+def test_add_shell(rest_api_client, tmp_path):
     url = urljoin(API_URL, "Shells")
-    mocked_responses.add(responses.POST, url, status=201)
 
     file_content = b"test buffer"
     _ = io.BytesIO(file_content)
@@ -208,33 +170,35 @@ def test_add_shell(rest_api_client, mocked_responses, tmp_path):
     shell_path = tmp_path / file_name
     shell_path.write_bytes(file_content)
 
-    rest_api_client.add_shell(str(shell_path))
+    with responses.RequestsMock() as rsps:
+        rsps.add(responses.POST, url, status=201)
 
-    assert len(mocked_responses.calls) == 2
-    body = mocked_responses.calls[1].request.body
+        rest_api_client.add_shell(str(shell_path))
+
+        assert len(rsps.calls) == 1
+        body = rsps.calls[0].request.body
+
     pattern = b"filename=[\"']" + file_name.encode() + b"[\"']"
     assert re.search(pattern, body)
     pattern = b"\\s" + file_content + b"\\s"
     assert re.search(pattern, body)
 
 
-def test_update_shell_from_buffer(rest_api_client, mocked_responses):
-    """Test update a Shell from a buffer.
-
-    :type rest_api_client: PackagingRestApiClient
-    :type mocked_responses: responses.RequestsMock
-    """
+def test_update_shell_from_buffer(rest_api_client):
     shell_name = "shell_name"
     url = urljoin(API_URL, f"Shells/{shell_name}")
-    mocked_responses.add(responses.PUT, url)
 
     file_content = b"test buffer"
     buffer = io.BytesIO(file_content)
 
-    rest_api_client.update_shell_from_buffer(buffer, shell_name)
+    with responses.RequestsMock() as rsps:
+        rsps.add(responses.PUT, url)
 
-    assert len(mocked_responses.calls) == 2
-    body = mocked_responses.calls[1].request.body
+        rest_api_client.update_shell_from_buffer(buffer, shell_name)
+
+        assert len(rsps.calls) == 1
+        body = rsps.calls[0].request.body
+
     assert re.search(b"filename=[\"']file[\"']", body)
     pattern = b"\\s" + file_content + b"\\s"
     assert re.search(pattern, body)
@@ -258,31 +222,20 @@ def test_update_shell_from_buffer_fails(
     expected_err_class,
     expected_err_text,
     rest_api_client,
-    mocked_responses,
 ):
-    """Test update a Shell from a buffer fails.
-
-    :type rest_api_client: PackagingRestApiClient
-    :type mocked_responses: responses.RequestsMock
-    """
     shell_name = "shell_name"
     url = urljoin(API_URL, f"Shells/{shell_name}")
-    mocked_responses.add(responses.PUT, url, status=status_code, body=err_msg)
 
-    with pytest.raises(expected_err_class, match=expected_err_text):
-        rest_api_client.update_shell_from_buffer(b"", shell_name)
+    with responses.RequestsMock() as rsps:
+        rsps.add(responses.PUT, url, status=status_code, body=err_msg)
+
+        with pytest.raises(expected_err_class, match=expected_err_text):
+            rest_api_client.update_shell_from_buffer(b"", shell_name)
 
 
-def test_update_shell(rest_api_client, mocked_responses, tmp_path):
-    """Test update a Shell.
-
-    :type rest_api_client: PackagingRestApiClient
-    :type mocked_responses: responses.RequestsMock
-    :type tmp_path: pathlib2.Path
-    """
+def test_update_shell(rest_api_client, tmp_path):
     shell_name = "shell_name"
     url = urljoin(API_URL, f"Shells/{shell_name}")
-    mocked_responses.add(responses.PUT, url)
 
     file_content = b"test buffer"
     _ = io.BytesIO(file_content)
@@ -291,22 +244,21 @@ def test_update_shell(rest_api_client, mocked_responses, tmp_path):
     shell_path = tmp_path / file_name
     shell_path.write_bytes(file_content)
 
-    rest_api_client.update_shell(str(shell_path))
+    with responses.RequestsMock() as rsps:
+        rsps.add(responses.PUT, url)
 
-    assert len(mocked_responses.calls) == 2
-    body = mocked_responses.calls[1].request.body
+        rest_api_client.update_shell(str(shell_path))
+
+        assert len(rsps.calls) == 1
+        body = rsps.calls[0].request.body
+
     pattern = b"filename=[\"']" + file_name.encode() + b"[\"']"
     assert re.search(pattern, body)
     pattern = b"\\s" + file_content + b"\\s"
     assert re.search(pattern, body)
 
 
-def test_get_shell(rest_api_client, mocked_responses):
-    """Test get a Shell.
-
-    :type rest_api_client: PackagingRestApiClient
-    :type mocked_responses: responses.RequestsMock
-    """
+def test_get_shell(rest_api_client):
     shell_name = "shell_name"
     url = urljoin(API_URL, f"Shells/{shell_name}")
     shell_info = {
@@ -321,17 +273,14 @@ def test_get_shell(rest_api_client, mocked_responses):
         "BasedOn": "",
         "ExecutionEnvironmentType": {"Position": 0, "Path": "2.7.10"},
     }
-    mocked_responses.add(responses.GET, url, json=shell_info)
 
-    assert rest_api_client.get_shell(shell_name) == shell_info
+    with responses.RequestsMock() as rsps:
+        rsps.add(responses.GET, url, json=shell_info)
+
+        assert rest_api_client.get_shell(shell_name) == shell_info
 
 
-def test_get_shell_as_model(rest_api_client, mocked_responses):
-    """Test get a Shell.
-
-    :type rest_api_client: PackagingRestApiClient
-    :type mocked_responses: responses.RequestsMock
-    """
+def test_get_shell_as_model(rest_api_client):
     shell_name = "shell_name"
     url = urljoin(API_URL, f"Shells/{shell_name}")
     shell_info = {
@@ -346,9 +295,12 @@ def test_get_shell_as_model(rest_api_client, mocked_responses):
         "BasedOn": "",
         "ExecutionEnvironmentType": {"Position": 0, "Path": "2.7.10"},
     }
-    mocked_responses.add(responses.GET, url, json=shell_info)
 
-    model = rest_api_client.get_shell_as_model(shell_name)
+    with responses.RequestsMock() as rsps:
+        rsps.add(responses.GET, url, json=shell_info)
+
+        model = rest_api_client.get_shell_as_model(shell_name)
+
     assert model.id == shell_info["Id"]
     assert model.name == shell_info["Name"]
     assert model.version == shell_info["Version"]
@@ -398,32 +350,25 @@ def test_get_shell_fails(
     expected_err_class,
     expected_err_text,
     rest_api_client,
-    mocked_responses,
 ):
-    """Test get a Shell fails.
-
-    :type rest_api_client: PackagingRestApiClient
-    :type mocked_responses: responses.RequestsMock
-    """
     shell_name = "shell_name"
     url = urljoin(API_URL, f"Shells/{shell_name}")
-    mocked_responses.add(responses.GET, url, status=status_code)
 
-    with pytest.raises(expected_err_class):
-        rest_api_client.get_shell(shell_name)
+    with responses.RequestsMock() as rsps:
+        rsps.add(responses.GET, url, status=status_code)
+
+        with pytest.raises(expected_err_class):
+            rest_api_client.get_shell(shell_name)
 
 
-def test_delete_shell(rest_api_client, mocked_responses):
-    """Test delete a Shell.
-
-    :type rest_api_client: PackagingRestApiClient
-    :type mocked_responses: responses.RequestsMock
-    """
+def test_delete_shell(rest_api_client):
     shell_name = "shell_name"
     url = urljoin(API_URL, f"Shells/{shell_name}")
-    mocked_responses.add(responses.DELETE, url)
 
-    rest_api_client.delete_shell(shell_name)
+    with responses.RequestsMock() as rsps:
+        rsps.add(responses.DELETE, url)
+
+        rest_api_client.delete_shell(shell_name)
 
 
 @pytest.mark.parametrize(
@@ -440,35 +385,30 @@ def test_delete_shell_fails(
     expected_err_class,
     expected_err_text,
     rest_api_client,
-    mocked_responses,
 ):
-    """Test delete a Shell fails.
-
-    :type rest_api_client: PackagingRestApiClient
-    :type mocked_responses: responses.RequestsMock
-    """
     shell_name = "shell_name"
     url = urljoin(API_URL, f"Shells/{shell_name}")
-    mocked_responses.add(responses.DELETE, url, status=status_code, body=err_msg)
 
-    with pytest.raises(expected_err_class, match=expected_err_text):
-        rest_api_client.delete_shell(shell_name)
+    with responses.RequestsMock() as rsps:
+        rsps.add(responses.DELETE, url, status=status_code, body=err_msg)
+
+        with pytest.raises(expected_err_class, match=expected_err_text):
+            rest_api_client.delete_shell(shell_name)
 
 
-def test_export_package(rest_api_client, mocked_responses):
-    """Test export a package.
-
-    :type rest_api_client: PackagingRestApiClient
-    :type mocked_responses: responses.RequestsMock
-    """
+def test_export_package(rest_api_client):
     url = urljoin(API_URL, "Package/ExportPackage")
     byte_data = b"package_data"
-    mocked_responses.add(responses.POST, url, byte_data)
     topologies = ["topology"]
 
-    assert rest_api_client.export_package(topologies) == byte_data
-    assert len(mocked_responses.calls) == 2
-    body = mocked_responses.calls[1].request.body
+    with responses.RequestsMock() as rsps:
+        rsps.add(responses.POST, url, byte_data)
+
+        assert rest_api_client.export_package(topologies) == byte_data
+
+        assert len(rsps.calls) == 1
+        body = rsps.calls[0].request.body
+
     assert body == json.dumps({"TopologyNames": topologies}).encode()
 
 
@@ -485,56 +425,47 @@ def test_export_package_fails(
     expected_err_class,
     expected_err_text,
     rest_api_client,
-    mocked_responses,
 ):
-    """Test export a package fails.
-
-    :type rest_api_client: PackagingRestApiClient
-    :type mocked_responses: responses.RequestsMock
-    """
     url = urljoin(API_URL, "Package/ExportPackage")
-    mocked_responses.add(responses.POST, url, status=status_code, body=err_msg)
 
-    with pytest.raises(expected_err_class, match=expected_err_text):
-        rest_api_client.export_package(["topology"])
+    with responses.RequestsMock() as rsps:
+        rsps.add(responses.POST, url, status=status_code, body=err_msg)
+
+        with pytest.raises(expected_err_class, match=expected_err_text):
+            rest_api_client.export_package(["topology"])
 
 
-def test_export_package_to_file(rest_api_client, mocked_responses, tmp_path):
-    """Test export a package to a file.
-
-    :type rest_api_client: PackagingRestApiClient
-    :type mocked_responses: responses.RequestsMock
-    :type tmp_path: pathlib2.Path
-    """
+def test_export_package_to_file(rest_api_client, tmp_path):
     url = urljoin(API_URL, "Package/ExportPackage")
     byte_data = b"package_data"
-    mocked_responses.add(responses.POST, url, byte_data)
     topologies = ["topology"]
     file_path = tmp_path / "package.zip"
 
-    rest_api_client.export_package_to_file(topologies, str(file_path))
+    with responses.RequestsMock() as rsps:
+        rsps.add(responses.POST, url, byte_data)
 
-    assert file_path.read_bytes() == byte_data
-    assert len(mocked_responses.calls) == 2
-    body = mocked_responses.calls[1].request.body
+        rest_api_client.export_package_to_file(topologies, str(file_path))
+
+        assert file_path.read_bytes() == byte_data
+        assert len(rsps.calls) == 1
+        body = rsps.calls[0].request.body
+
     assert body.decode() == json.dumps({"TopologyNames": topologies})
 
 
-def test_import_package_from_buffer(rest_api_client, mocked_responses):
-    """Test import a package from the buffer.
-
-    :type rest_api_client: PackagingRestApiClient
-    :type mocked_responses: responses.RequestsMock
-    """
+def test_import_package_from_buffer(rest_api_client):
     url = urljoin(API_URL, "Package/ImportPackage")
-    mocked_responses.add(responses.POST, url, json={"Success": True})
     file_content = b"test_buffer"
     buffer = io.BytesIO(file_content)
 
-    rest_api_client.import_package_from_buffer(buffer)
+    with responses.RequestsMock() as rsps:
+        rsps.add(responses.POST, url, json={"Success": True})
 
-    assert len(mocked_responses.calls) == 2
-    body = mocked_responses.calls[1].request.body
+        rest_api_client.import_package_from_buffer(buffer)
+
+        assert len(rsps.calls) == 1
+        body = rsps.calls[0].request.body
+
     assert re.search(b"filename=[\"']file[\"']", body)
     pattern = b"\\s" + file_content + b"\\s"
     assert re.search(pattern, body)
@@ -553,88 +484,33 @@ def test_import_package_from_buffer_fails(
     expected_err_class,
     expected_err_text,
     rest_api_client,
-    mocked_responses,
 ):
-    """Test import a package from the buffer fails.
-
-    :type rest_api_client: PackagingRestApiClient
-    :type mocked_responses: responses.RequestsMock
-    """
     url = urljoin(API_URL, "Package/ImportPackage")
-    mocked_responses.add(responses.POST, url, status=status_code, body=err_msg)
     file_content = b"test_buffer"
     buffer = io.BytesIO(file_content)
 
-    with pytest.raises(expected_err_class, match=expected_err_text):
-        rest_api_client.import_package_from_buffer(buffer)
+    with responses.RequestsMock() as rsps:
+        rsps.add(responses.POST, url, status=status_code, body=err_msg)
+
+        with pytest.raises(expected_err_class, match=expected_err_text):
+            rest_api_client.import_package_from_buffer(buffer)
 
 
-def test_import_package(rest_api_client, mocked_responses, tmp_path):
-    """Test import a package.
-
-    :type rest_api_client: PackagingRestApiClient
-    :type mocked_responses: responses.RequestsMock
-    :type tmp_path: pathlib2.Path
-    """
+def test_import_package(rest_api_client, tmp_path):
     url = urljoin(API_URL, "Package/ImportPackage")
-    mocked_responses.add(responses.POST, url, json={"Success": True})
     file_content = b"test_buffer"
     file_name = "package.zip"
     file_path = tmp_path / file_name
     file_path.write_bytes(file_content)
 
-    rest_api_client.import_package(str(file_path))
+    with responses.RequestsMock() as rsps:
+        rsps.add(responses.POST, url, json={"Success": True})
 
-    assert len(mocked_responses.calls) == 2
-    body = mocked_responses.calls[1].request.body
-    pattern = b"filename=[\"']" + file_name.encode() + b"[\"']"
-    assert re.search(pattern, body)
-    pattern = b"\\s" + file_content + b"\\s"
-    assert re.search(pattern, body)
+        rest_api_client.import_package(str(file_path))
 
+        assert len(rsps.calls) == 1
+        body = rsps.calls[0].request.body
 
-def test_upload_environment_zip_data_is_deprecated(rest_api_client, mocked_responses):
-    """Test upload_environment_zip_data is deprecated.
-
-    :type rest_api_client: PackagingRestApiClient
-    :type mocked_responses: responses.RequestsMock
-    """
-    url = urljoin(API_URL, "Package/ImportPackage")
-    mocked_responses.add(responses.POST, url, json={"Success": True})
-    file_content = b"test_buffer"
-    buffer = io.BytesIO(file_content)
-
-    with pytest.deprecated_call():
-        rest_api_client.upload_environment_zip_data(buffer)
-
-    assert len(mocked_responses.calls) == 2
-    body = mocked_responses.calls[1].request.body
-    assert re.search(b"filename=[\"']file[\"']", body)
-    pattern = b"\\s" + file_content + b"\\s"
-    assert re.search(pattern, body)
-
-
-def test_upload_environment_zip_file_is_deprecated(
-    rest_api_client, mocked_responses, tmp_path
-):
-    """Test import a package.
-
-    :type rest_api_client: PackagingRestApiClient
-    :type mocked_responses: responses.RequestsMock
-    :type tmp_path: pathlib2.Path
-    """
-    url = urljoin(API_URL, "Package/ImportPackage")
-    mocked_responses.add(responses.POST, url, json={"Success": True})
-    file_content = b"test_buffer"
-    file_name = "package.zip"
-    file_path = tmp_path / file_name
-    file_path.write_bytes(file_content)
-
-    with pytest.deprecated_call():
-        rest_api_client.upload_environment_zip_file(str(file_path))
-
-    assert len(mocked_responses.calls) == 2
-    body = mocked_responses.calls[1].request.body
     pattern = b"filename=[\"']" + file_name.encode() + b"[\"']"
     assert re.search(pattern, body)
     pattern = b"\\s" + file_content + b"\\s"
