@@ -1,52 +1,74 @@
 from __future__ import annotations
 
+from attrs import define, field
+from typing_extensions import Self
 
+
+@define
 class UserInfo:
-    def __init__(self, info_dict: dict):
-        self.user_name: str = info_dict["Username"]
-        self.email: str = info_dict["Email"]
+    user_name: str
+    email: str
 
-    def __repr__(self):
-        return "<UserInfo Username:{0.user_name}, Email:{0.email}>".format(self)
+    @classmethod
+    def from_dict(cls, info_dict: dict) -> Self:
+        return cls(
+            user_name=info_dict["Username"],
+            email=info_dict["Email"],
+        )
 
 
+@define
 class ExecutionEnvironmentType:
-    def __init__(self, info_dict):
-        self.position: int = info_dict["Position"]
-        self.path: str = info_dict["Path"]
+    position: int
+    path: str
 
-    def __repr__(self):
-        return (
-            "<ExecutionEnvironmentType Position:{0.position}, "
-            "Path:{0.path}>".format(self)
+    @classmethod
+    def from_dict(cls, info_dict: dict) -> Self:
+        return cls(
+            position=info_dict["Position"],
+            path=info_dict["Path"],
         )
 
 
+@define
 class ShellInfo:
-    def __init__(self, info_dict):
-        self.id: str = info_dict["Id"]
-        self.name: str = info_dict["Name"]
-        self.version: str = info_dict["Version"]
-        self.standard_type: str = info_dict["StandardType"]
-        self.modification_date: str = info_dict["ModificationDate"]
-        self.last_modified_by_user = UserInfo(info_dict["LastModifiedByUser"])
-        self.author: str = info_dict["Author"]
-        self.is_official: bool = info_dict["IsOfficial"]
-        self.based_on: str = info_dict["BasedOn"]
-        self.execution_environment_type = ExecutionEnvironmentType(
-            info_dict["ExecutionEnvironmentType"]
+    id: str = field(repr=False)  # noqa: A003
+    name: str
+    version: str
+    standard_type: str = field(repr=False)
+    modification_date: str = field(repr=False)
+    last_modified_by_user: UserInfo = field(repr=False)
+    author: str = field(repr=False)
+    is_official: bool
+    based_on: str = field(repr=False)
+    execution_environment_type: ExecutionEnvironmentType = field(repr=False)
+
+    @classmethod
+    def from_dict(cls, info_dict: dict) -> Self:
+        return cls(
+            id=info_dict["Id"],
+            name=info_dict["Name"],
+            version=info_dict["Version"],
+            standard_type=info_dict["StandardType"],
+            modification_date=info_dict["ModificationDate"],
+            last_modified_by_user=UserInfo.from_dict(info_dict["LastModifiedByUser"]),
+            author=info_dict["Author"],
+            is_official=info_dict["IsOfficial"],
+            based_on=info_dict["BasedOn"],
+            execution_environment_type=ExecutionEnvironmentType.from_dict(
+                info_dict["ExecutionEnvironmentType"]
+            ),
         )
 
-    def __repr__(self):
-        return "<ShellInfo Name:{0.name}, Version: {0.version}>".format(self)
 
-
+@define
 class StandardInfo:
-    def __init__(self, info_dict):
-        self.standard_name: str = info_dict["StandardName"]
-        self.versions: list[str] = info_dict["Versions"]
+    standard_name: str
+    versions: list[str]
 
-    def __repr__(self):
-        return "<StandardInfo Name:{0.standard_name}, Versions:{0.versions}>".format(
-            self
+    @classmethod
+    def from_dict(cls, info_dict: dict) -> Self:
+        return cls(
+            standard_name=info_dict["StandardName"],
+            versions=info_dict["Versions"],
         )
