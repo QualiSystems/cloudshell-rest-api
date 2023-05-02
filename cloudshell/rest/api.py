@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Generator
 from pathlib import Path
 from typing.io import BinaryIO
 from urllib.parse import urljoin
@@ -16,6 +17,7 @@ from cloudshell.rest.exceptions import (
     ShellNotFound,
 )
 from cloudshell.rest.models import ShellInfo, StandardInfo
+from cloudshell.rest.progress_bar import iter_resp_with_pb, upload_with_pb
 
 
 @define
@@ -23,6 +25,7 @@ class PackagingRestApiClient:
     host: str
     _token: str = field(repr=False)
     port: int = 9000
+    _show_progress: bool = field(default=False, repr=False)
     _api_url: str = field(init=False)
     _headers: dict[str, str] = field(init=False)
 
@@ -38,6 +41,7 @@ class PackagingRestApiClient:
         password: str,
         domain: str = "Global",
         port: int = 9000,
+        show_progress: bool = False,
     ) -> Self:
         url = urljoin(_get_api_url(host, port), "Auth/Login")
         req_data = {
@@ -51,13 +55,17 @@ class PackagingRestApiClient:
         elif resp.status_code != 200:
             raise PackagingRestApiError(resp.text)
         token = resp.text.strip("'\"")
-        return cls(host, token, port)
+        return cls(host, token, port, show_progress=show_progress)
 
     def add_shell_from_buffer(self, file_obj: BinaryIO | bytes) -> None:
         """Add a new Shell from the buffer or binary."""
         url = urljoin(self._api_url, "Shells")
-        req_data = {"file": file_obj}
-        resp = requests.post(url, files=req_data, headers=self._headers)
+        req_data = {"files": ("file", file_obj)}
+        headers = self._headers.copy()
+
+        with upload_with_pb(req_data, headers, show=self._show_progress) as new_data:
+            resp = requests.post(url, data=new_data, headers=headers)
+
         if resp.status_code != 201:
             msg = f"Can't add shell, response: {resp.text}"
             raise PackagingRestApiError(msg)
@@ -75,8 +83,12 @@ class PackagingRestApiClient:
     ) -> None:
         """Updates an existing Shell from the buffer or binary."""
         url = urljoin(self._api_url, f"Shells/{shell_name}")
-        req_data = {"file": file_obj}
-        resp = requests.put(url, files=req_data, headers=self._headers)
+        req_data = {"files": ("file", file_obj)}
+        headers = self._headers.copy()
+
+        with upload_with_pb(req_data, headers, show=self._show_progress) as new_data:
+            resp = requests.put(url, data=new_data, headers=headers)
+
         if resp.status_code == 404:
             raise ShellNotFound()
         elif resp.status_code != 200:
@@ -132,29 +144,36 @@ class PackagingRestApiClient:
         elif resp.status_code != 200:
             raise PackagingRestApiError(resp.text)
 
-    def export_package(self, topologies: list[str]) -> bytes:
+    def export_package(self, topologies: list[str]) -> Generator[bytes, None, None]:
         """Export a package with the topologies from the CloudShell."""
         url = urljoin(self._api_url, "Package/ExportPackage")
         req_data = {"TopologyNames": topologies}
-        resp = requests.post(url, headers=self._headers, json=req_data)
+        resp = requests.post(url, headers=self._headers, json=req_data, stream=True)
+
         if resp.status_code == 404:
             raise FeatureUnavailable()
         elif resp.status_code != 200:
             raise PackagingRestApiError(resp.text)
-        return resp.content
+
+        yield from iter_resp_with_pb(resp, show=self._show_progress)
 
     def export_package_to_file(
         self, topologies: list[str], file_path: str | Path
     ) -> None:
         """Export a package with the topologies and save it to the file."""
         with open(file_path, "wb") as f:
-            f.write(self.export_package(topologies))
+            for data in self.export_package(topologies):
+                f.write(data)
 
     def import_package_from_buffer(self, file_obj: BinaryIO | bytes) -> None:
         """Import the package from buffer to the CloudShell."""
         url = urljoin(self._api_url, "Package/ImportPackage")
-        req_data = {"file": file_obj}
-        resp = requests.post(url, headers=self._headers, files=req_data)
+        req_data = {"files": ("file", file_obj)}
+        headers = self._headers.copy()
+
+        with upload_with_pb(req_data, headers, show=self._show_progress) as new_data:
+            resp = requests.post(url, data=new_data, headers=headers)
+
         if resp.status_code == 404:
             raise FeatureUnavailable()
         elif resp.status_code != 200:
