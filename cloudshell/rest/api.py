@@ -14,7 +14,7 @@ from cloudshell.rest.exceptions import (
     FeatureUnavailable,
     LoginFailedError,
     PackagingRestApiError,
-    ShellNotFoundException,
+    ShellNotFound,
 )
 from cloudshell.rest.models import ShellInfo, StandardInfo
 
@@ -79,7 +79,7 @@ class PackagingRestApiClient:
         req_data = {"file": file_obj}
         resp = requests.put(url, files=req_data, headers=self._headers)
         if resp.status_code == 404:
-            raise ShellNotFoundException()
+            raise ShellNotFound()
         elif resp.status_code != 200:
             msg = f"Can't update shell, response: {resp.text}"
             raise PackagingRestApiError(msg)
@@ -113,7 +113,7 @@ class PackagingRestApiClient:
         if resp.status_code == 404:
             raise FeatureUnavailable()
         elif resp.status_code == 400:
-            raise ShellNotFoundException()
+            raise ShellNotFound()
         elif resp.status_code != 200:
             raise PackagingRestApiError(resp.text)
         return resp.json()
@@ -129,7 +129,7 @@ class PackagingRestApiClient:
         if resp.status_code == 404:
             raise FeatureUnavailable()
         elif resp.status_code == 400:
-            raise ShellNotFoundException()
+            raise ShellNotFound()
         elif resp.status_code != 200:
             raise PackagingRestApiError(resp.text)
 

@@ -11,7 +11,7 @@ from cloudshell.rest.exceptions import (
     FeatureUnavailable,
     LoginFailedError,
     PackagingRestApiError,
-    ShellNotFoundException,
+    ShellNotFound,
 )
 
 HOST = "host"
@@ -209,7 +209,7 @@ def test_update_shell_from_buffer(rest_api_client):
 @pytest.mark.parametrize(
     ("status_code", "err_msg", "expected_err_class", "expected_err_text"),
     (
-        (404, "", ShellNotFoundException, ""),
+        (404, "", ShellNotFound, ""),
         (
             500,
             "Internal server error",
@@ -340,7 +340,7 @@ def test_get_shell_as_model(rest_api_client):
     ("status_code", "err_msg", "expected_err_class", "expected_err_text"),
     (
         (404, "", FeatureUnavailable, ""),
-        (400, "", ShellNotFoundException, ""),
+        (400, "", ShellNotFound, ""),
         (500, "Internal server error", PackagingRestApiError, "Internal server error"),
     ),
 )
@@ -375,7 +375,7 @@ def test_delete_shell(rest_api_client):
     ("status_code", "err_msg", "expected_err_class", "expected_err_text"),
     (
         (404, "", FeatureUnavailable, ""),
-        (400, "", ShellNotFoundException, ""),
+        (400, "", ShellNotFound, ""),
         (500, "Internal server error", PackagingRestApiError, "Internal server error"),
     ),
 )

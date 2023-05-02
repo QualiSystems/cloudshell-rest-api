@@ -2,7 +2,7 @@ class PackagingRestApiError(Exception):
     """Base packaging REST API Error."""
 
 
-class ShellNotFoundException(PackagingRestApiError):
+class ShellNotFound(PackagingRestApiError):
     pass
 
 
