@@ -8,7 +8,7 @@ def get_file_content(file_name):
 
 readme = get_file_content("README.rst")
 history = get_file_content("HISTORY.rst")
-version = get_file_content("version.txt")
+version = get_file_content("version.txt").strip()
 
 setup(
     name="cloudshell-rest-api",
