@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-import warnings
 from pathlib import Path
 from typing.io import BinaryIO
 from urllib.parse import urljoin
@@ -165,19 +164,6 @@ class PackagingRestApiClient:
         """Import the package from the file to the CloudShell."""
         with open(package_path, "rb") as f:
             self.import_package_from_buffer(f)
-
-    def upload_environment_zip_data(self, zipdata):
-        warnings.warn(
-            "This method is deprecated, use import_package_from_buffer instead",
-            DeprecationWarning,
-        )
-        self.import_package_from_buffer(zipdata)
-
-    def upload_environment_zip_file(self, zipfilename):
-        warnings.warn(
-            "This method is deprecated, use import_package instead", DeprecationWarning
-        )
-        self.import_package(zipfilename)
 
 
 def _get_api_url(host: str, port: int) -> str:
