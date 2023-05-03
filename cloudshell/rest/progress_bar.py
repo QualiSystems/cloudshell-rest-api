@@ -11,6 +11,10 @@ from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 def iter_resp_with_pb(
     resp: Response, show: bool = True, chunk: int = 4096
 ) -> Generator[bytes, None, None]:
+    """Iterate over response content with progress bar.
+
+    The request should be streaming.
+    """
     total = int(resp.headers.get("content-length", 0))
 
     pb_context = alive_bar(
@@ -29,6 +33,11 @@ def iter_resp_with_pb(
 
 @contextmanager
 def upload_with_pb(data: dict, headers: dict, show: bool = True):
+    """Upload data with progress bar.
+
+    Returns a new data object which should be used in the request.
+    Updates the headers with the new content type.
+    """
     e = MultipartEncoder(data)
     pb_context = alive_bar(
         e.len,
