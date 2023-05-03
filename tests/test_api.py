@@ -1,6 +1,5 @@
 import io
 import json
-import re
 from urllib.parse import parse_qs, urljoin
 
 import pytest
@@ -13,6 +12,8 @@ from cloudshell.rest.exceptions import (
     PackagingRestApiError,
     ShellNotFound,
 )
+
+from tests.multipart_matcher import file_matcher
 
 HOST = "host"
 PORT = 9000
@@ -30,7 +31,8 @@ def rest_api_client():
 
 def test_login():
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.PUT, urljoin(API_URL, "Auth/Login"), body=TOKEN)
+        body = f"'{TOKEN}'"
+        rsps.put(urljoin(API_URL, "Auth/Login"), body=body)
 
         api = PackagingRestApiClient.login(
             HOST, USERNAME, PASSWORD, domain=DOMAIN, port=PORT
@@ -54,7 +56,7 @@ def test_login():
 def test_login_failed(status_code, err_msg, expected_err_class, expected_err_text):
     url = urljoin(API_URL, "Auth/Login")
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.PUT, url, body=err_msg, status=status_code)
+        rsps.put(url, body=err_msg, status=status_code)
 
         with pytest.raises(expected_err_class, match=expected_err_text):
             PackagingRestApiClient.login(HOST, USERNAME, PASSWORD)
@@ -74,7 +76,7 @@ def test_get_installed_standards(rest_api_client):
     url = urljoin(API_URL, "Standards")
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, url, json=standards)
+        rsps.get(url, json=standards)
 
         assert rest_api_client.get_installed_standards() == standards
 
@@ -93,7 +95,7 @@ def test_get_installed_standards_as_models(rest_api_client):
     url = urljoin(API_URL, "Standards")
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, url, json=standards)
+        rsps.get(url, json=standards)
 
         models = rest_api_client.get_installed_standards_as_models()
 
@@ -125,7 +127,7 @@ def test_get_installed_standards_failed(
     url = urljoin(API_URL, "Standards")
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, url, status=status_code, body=text_msg)
+        rsps.get(url, status=status_code, body=text_msg)
 
         with pytest.raises(expected_err_class, match=expected_err_text):
             rest_api_client.get_installed_standards()
@@ -137,16 +139,11 @@ def test_add_shell_from_buffer(rest_api_client):
     buffer = io.BytesIO(file_content)
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.POST, url, status=201)
+        rsps.post(url, status=201, match=[file_matcher("file", file_content)])
 
         rest_api_client.add_shell_from_buffer(buffer)
 
         assert len(rsps.calls) == 1
-        body = rsps.calls[0].request.body
-
-    assert re.search(b"filename=[\"']file[\"']", body)
-    pattern = b"\\s" + file_content + b"\\s"
-    assert re.search(pattern, body)
 
 
 def test_add_shell_from_buffer_fails(rest_api_client):
@@ -155,7 +152,7 @@ def test_add_shell_from_buffer_fails(rest_api_client):
     expected_err = f"Can't add shell, response: {err_msg}"
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.POST, url, status=500, body=err_msg)
+        rsps.post(url, status=500, body=err_msg)
 
         with pytest.raises(PackagingRestApiError, match=expected_err):
             rest_api_client.add_shell_from_buffer(b"")
@@ -164,8 +161,6 @@ def test_add_shell_from_buffer_fails(rest_api_client):
 def test_add_shell(rest_api_client, tmp_path):
     url = urljoin(API_URL, "Shells")
 
-    file_content = b"test buffer"
-    _ = io.BytesIO(file_content)
     shell_name = "shell_name"
     file_name = f"{shell_name}.zip"
     file_content = b"test buffer"
@@ -173,17 +168,11 @@ def test_add_shell(rest_api_client, tmp_path):
     shell_path.write_bytes(file_content)
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.POST, url, status=201)
+        rsps.post(url, status=201, match=[file_matcher("file", file_content)])
 
         rest_api_client.add_shell(str(shell_path))
 
         assert len(rsps.calls) == 1
-        body = rsps.calls[0].request.body
-
-    pattern = b"filename=[\"']" + file_name.encode() + b"[\"']"
-    assert re.search(pattern, body)
-    pattern = b"\\s" + file_content + b"\\s"
-    assert re.search(pattern, body)
 
 
 def test_update_shell_from_buffer(rest_api_client):
@@ -194,16 +183,11 @@ def test_update_shell_from_buffer(rest_api_client):
     buffer = io.BytesIO(file_content)
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.PUT, url)
+        rsps.put(url, match=[file_matcher("file", file_content)])
 
         rest_api_client.update_shell_from_buffer(buffer, shell_name)
 
         assert len(rsps.calls) == 1
-        body = rsps.calls[0].request.body
-
-    assert re.search(b"filename=[\"']file[\"']", body)
-    pattern = b"\\s" + file_content + b"\\s"
-    assert re.search(pattern, body)
 
 
 @pytest.mark.parametrize(
@@ -229,7 +213,7 @@ def test_update_shell_from_buffer_fails(
     url = urljoin(API_URL, f"Shells/{shell_name}")
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.PUT, url, status=status_code, body=err_msg)
+        rsps.put(url, status=status_code, body=err_msg)
 
         with pytest.raises(expected_err_class, match=expected_err_text):
             rest_api_client.update_shell_from_buffer(b"", shell_name)
@@ -247,17 +231,9 @@ def test_update_shell(rest_api_client, tmp_path):
     shell_path.write_bytes(file_content)
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.PUT, url)
+        rsps.put(url, match=[file_matcher("file", file_content)])
 
         rest_api_client.update_shell(str(shell_path))
-
-        assert len(rsps.calls) == 1
-        body = rsps.calls[0].request.body
-
-    pattern = b"filename=[\"']" + file_name.encode() + b"[\"']"
-    assert re.search(pattern, body)
-    pattern = b"\\s" + file_content + b"\\s"
-    assert re.search(pattern, body)
 
 
 def test_get_shell(rest_api_client):
@@ -277,7 +253,7 @@ def test_get_shell(rest_api_client):
     }
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, url, json=shell_info)
+        rsps.get(url, json=shell_info)
 
         assert rest_api_client.get_shell(shell_name) == shell_info
 
@@ -304,7 +280,7 @@ def test_get_shell_as_model(rest_api_client):
     )
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, url, json=shell_info)
+        rsps.get(url, json=shell_info)
 
         model = rest_api_client.get_shell_as_model(shell_name)
 
@@ -355,7 +331,7 @@ def test_get_shell_fails(
     url = urljoin(API_URL, f"Shells/{shell_name}")
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, url, status=status_code)
+        rsps.get(url, status=status_code)
 
         with pytest.raises(expected_err_class):
             rest_api_client.get_shell(shell_name)
@@ -366,7 +342,7 @@ def test_delete_shell(rest_api_client):
     url = urljoin(API_URL, f"Shells/{shell_name}")
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.DELETE, url)
+        rsps.delete(url)
 
         rest_api_client.delete_shell(shell_name)
 
@@ -390,7 +366,7 @@ def test_delete_shell_fails(
     url = urljoin(API_URL, f"Shells/{shell_name}")
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.DELETE, url, status=status_code, body=err_msg)
+        rsps.delete(url, status=status_code, body=err_msg)
 
         with pytest.raises(expected_err_class, match=expected_err_text):
             rest_api_client.delete_shell(shell_name)
@@ -402,9 +378,10 @@ def test_export_package(rest_api_client):
     topologies = ["topology"]
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.POST, url, byte_data)
+        rsps.post(url, byte_data)
 
-        assert rest_api_client.export_package(topologies) == byte_data
+        data = b"".join(list(rest_api_client.export_package(topologies)))
+        assert data == byte_data
 
         assert len(rsps.calls) == 1
         body = rsps.calls[0].request.body
@@ -429,10 +406,10 @@ def test_export_package_fails(
     url = urljoin(API_URL, "Package/ExportPackage")
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.POST, url, status=status_code, body=err_msg)
+        rsps.post(url, status=status_code, body=err_msg)
 
         with pytest.raises(expected_err_class, match=expected_err_text):
-            rest_api_client.export_package(["topology"])
+            list(rest_api_client.export_package(["topology"]))
 
 
 def test_export_package_to_file(rest_api_client, tmp_path):
@@ -459,16 +436,13 @@ def test_import_package_from_buffer(rest_api_client):
     buffer = io.BytesIO(file_content)
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.POST, url, json={"Success": True})
+        rsps.post(
+            url, json={"Success": True}, match=[file_matcher("file", file_content)]
+        )
 
         rest_api_client.import_package_from_buffer(buffer)
 
         assert len(rsps.calls) == 1
-        body = rsps.calls[0].request.body
-
-    assert re.search(b"filename=[\"']file[\"']", body)
-    pattern = b"\\s" + file_content + b"\\s"
-    assert re.search(pattern, body)
 
 
 @pytest.mark.parametrize(
@@ -490,7 +464,7 @@ def test_import_package_from_buffer_fails(
     buffer = io.BytesIO(file_content)
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.POST, url, status=status_code, body=err_msg)
+        rsps.post(url, status=status_code, body=err_msg)
 
         with pytest.raises(expected_err_class, match=expected_err_text):
             rest_api_client.import_package_from_buffer(buffer)
@@ -504,14 +478,10 @@ def test_import_package(rest_api_client, tmp_path):
     file_path.write_bytes(file_content)
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.POST, url, json={"Success": True})
+        rsps.post(
+            url, json={"Success": True}, match=[file_matcher("file", file_content)]
+        )
 
         rest_api_client.import_package(str(file_path))
 
         assert len(rsps.calls) == 1
-        body = rsps.calls[0].request.body
-
-    pattern = b"filename=[\"']" + file_name.encode() + b"[\"']"
-    assert re.search(pattern, body)
-    pattern = b"\\s" + file_content + b"\\s"
-    assert re.search(pattern, body)
