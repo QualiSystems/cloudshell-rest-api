@@ -2,6 +2,14 @@
 History
 =======
 
+9.0.0 (2023-05-04)
+--------------------
+
+* Added get_shell_as_model, get_installed_standards_as_model
+* Added the ability to connect with an existing token
+* Added progress bar for downloading/uploading files
+* Removed support of Python2
+
 8.2.2.0 (2019-01-08)
 --------------------
 
