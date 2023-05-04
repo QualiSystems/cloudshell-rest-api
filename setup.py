@@ -6,7 +6,7 @@ def get_file_content(file_name):
         return f.read()
 
 
-readme = get_file_content("README.rst")
+readme = get_file_content("README.md")
 history = get_file_content("HISTORY.rst")
 version = get_file_content("version.txt").strip()
 
