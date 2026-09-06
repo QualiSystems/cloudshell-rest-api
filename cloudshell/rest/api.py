@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from collections.abc import Generator
 from pathlib import Path
-from typing.io import BinaryIO
+from typing import BinaryIO
 from urllib.parse import urljoin
 
 import requests
